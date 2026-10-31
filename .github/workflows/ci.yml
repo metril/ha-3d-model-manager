@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: "3.13"
           enable-cache: true
-      - run: uv sync
+      - run: uv sync --locked
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - name: mypy (advisory)
@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           enable-cache: true
-      - run: uv sync
+      - run: uv sync --locked
       - run: uv run pytest --splits 4 --group ${{ matrix.group }} -n auto
 
   # Single required check; skipped jobs (e.g. PR-only `version`) count as pass.

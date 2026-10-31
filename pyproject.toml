@@ -2,14 +2,14 @@
 name = "ha-3d-model-manager-integration"
 version = "0.1.0"
 description = "Home Assistant integration for 3D Model Manager (tdmm)"
-requires-python = ">=3.13"
+requires-python = ">=3.13.2"
 dependencies = []
 
 [dependency-groups]
 dev = [
     "ruff>=0.4.0",
     "mypy>=1.10.0",
-    "pytest-homeassistant-custom-component",
+    "pytest-homeassistant-custom-component>=0.13.316",
     "pytest-xdist",
     "pytest-split",
     "aioresponses",

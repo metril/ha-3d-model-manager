@@ -7,7 +7,7 @@
 - Types (advisory): `uv run mypy custom_components/tdmm`
 
 ## Conventions
-- Domain `tdmm`; Python >=3.13 (HA 2025.8 needs 3.13, so no 3.12 leg). CI matrix: the two newest Pythons the locked phcc supports (currently 3.13, 3.14 if supported by lock).
+- Domain `tdmm`; Python >=3.13.2 (HA 2025.8+ needs 3.13; no 3.12 leg). CI matrix: 3.13 and 3.14, the two newest Pythons the locked phcc supports.
 - Ruff: py312 target, line length 120, rules E,F,W,I,UP,B,SIM,TCH. mypy `disallow_untyped_defs` (advisory).
 - `strings.json` and `translations/en.json` must be byte-identical.
 - unique_id entity: `{entry_id}_{printer_id}_{key}`. No module-level mutable state; per-instance flags go in `hass.data`.
