@@ -79,6 +79,170 @@
       "hms_active": {
         "name": "HMS alert"
       }
+    },
+    "sensor": {
+      "print_state": {
+        "name": "Print state",
+        "state": {
+          "idle": "Idle",
+          "prepare": "Prepare",
+          "running": "Running",
+          "pause": "Pause",
+          "finish": "Finish",
+          "failed": "Failed",
+          "slicing": "Slicing",
+          "unknown": "Unknown"
+        }
+      },
+      "progress": {
+        "name": "Progress"
+      },
+      "remaining_time": {
+        "name": "Remaining time"
+      },
+      "end_time": {
+        "name": "End time"
+      },
+      "current_layer": {
+        "name": "Current layer"
+      },
+      "total_layers": {
+        "name": "Total layers"
+      },
+      "nozzle_temperature": {
+        "name": "Nozzle temperature"
+      },
+      "nozzle_target_temperature": {
+        "name": "Nozzle target temperature"
+      },
+      "bed_temperature": {
+        "name": "Bed temperature"
+      },
+      "bed_target_temperature": {
+        "name": "Bed target temperature"
+      },
+      "chamber_temperature": {
+        "name": "Chamber temperature"
+      },
+      "stage": {
+        "name": "Stage"
+      },
+      "speed_profile": {
+        "name": "Speed profile",
+        "state": {
+          "silent": "Silent",
+          "standard": "Standard",
+          "sport": "Sport",
+          "ludicrous": "Ludicrous"
+        }
+      },
+      "wifi_signal": {
+        "name": "WiFi signal"
+      },
+      "current_model": {
+        "name": "Current model"
+      },
+      "print_error": {
+        "name": "Print error"
+      },
+      "active_filament_material": {
+        "name": "Active filament material"
+      },
+      "active_filament_color": {
+        "name": "Active filament color"
+      },
+      "firmware_version": {
+        "name": "Firmware version"
+      },
+      "nozzle_type": {
+        "name": "Nozzle type"
+      },
+      "nozzle_diameter": {
+        "name": "Nozzle diameter"
+      },
+      "external_spool_material": {
+        "name": "External spool material"
+      },
+      "external_spool_color": {
+        "name": "External spool color"
+      },
+      "tray_material": {
+        "name": "Tray {slot} material"
+      },
+      "tray_color": {
+        "name": "Tray {slot} color"
+      },
+      "tray_remaining": {
+        "name": "Tray {slot} remaining"
+      },
+      "ams_humidity": {
+        "name": "Humidity"
+      },
+      "ams_temperature": {
+        "name": "Temperature"
+      }
+    },
+    "camera": {
+      "camera": {
+        "name": "Camera"
+      }
+    },
+    "image": {
+      "print_thumbnail": {
+        "name": "Print thumbnail"
+      }
+    },
+    "light": {
+      "chamber_light": {
+        "name": "Chamber light"
+      }
+    },
+    "fan": {
+      "part_fan": {
+        "name": "Part fan"
+      },
+      "aux_fan": {
+        "name": "Aux fan"
+      },
+      "chamber_fan": {
+        "name": "Chamber fan"
+      }
+    },
+    "number": {
+      "nozzle_target_temperature": {
+        "name": "Nozzle target temperature"
+      },
+      "bed_target_temperature": {
+        "name": "Bed target temperature"
+      }
+    },
+    "select": {
+      "speed_profile": {
+        "name": "Speed profile",
+        "state": {
+          "silent": "Silent",
+          "standard": "Standard",
+          "sport": "Sport",
+          "ludicrous": "Ludicrous"
+        }
+      }
+    },
+    "button": {
+      "pause": {
+        "name": "Pause"
+      },
+      "resume": {
+        "name": "Resume"
+      },
+      "stop": {
+        "name": "Stop"
+      },
+      "home": {
+        "name": "Home"
+      },
+      "clear_hms": {
+        "name": "Clear HMS"
+      }
     }
   },
   "exceptions": {
