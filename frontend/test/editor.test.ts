@@ -68,4 +68,33 @@ describe("tdmm-card-editor", () => {
     await change({ ...form().data, theme: { accent: "notacolor", radius: 8 } });
     expect(got[0]!.theme).toEqual({ radius: 8 });
   });
+  it("keeps raw invalid colour in the form while omitting it from emitted config", async () => {
+    vi.stubGlobal("CSS", { supports: (_p: string, v: string) => v === "#ff0000" });
+    const { got, form, change, el } = await mount({ type: T("progress"), device_id: "d1" });
+    await change({ ...form().data, theme: { accent: "#ff0000" } });
+    expect(got[0]!.theme).toEqual({ accent: "#ff0000" });
+    await change({ ...form().data, theme: { accent: "#ff000" } });
+    await el.updateComplete;
+    expect((form().data.theme as Record<string, unknown>).accent).toBe("#ff000");
+    expect(got[1]!.theme).toBeUndefined();
+  });
+  it("missing device_id/hide_tabs in value-changed clears them", async () => {
+    const { got, change } = await mount({ type: T("printer"), device_id: "d1", hide_tabs: ["control"] });
+    await change({});
+    expect(got[0]!.device_id).toBe("");
+    expect(got[0]!.hide_tabs).toBeUndefined();
+  });
+  it("cleared theme key is removed from emitted config", async () => {
+    const { got, change } = await mount({ type: T("progress"), device_id: "d1", theme: { accent: "#ff0000" } });
+    await change({ device_id: "d1", theme: { accent: "" } });
+    expect(got[0]!.theme).toBeUndefined();
+  });
+  it("setConfig and tab switching do not emit config-changed", async () => {
+    const { el, got } = await mount({ type: T("printer"), device_id: "d1" });
+    el.setConfig({ type: T("printer"), device_id: "d2" } as never);
+    await el.updateComplete;
+    (el.shadowRoot!.querySelectorAll("button.tab")[1] as HTMLElement).click();
+    await el.updateComplete;
+    expect(got).toEqual([]);
+  });
 });

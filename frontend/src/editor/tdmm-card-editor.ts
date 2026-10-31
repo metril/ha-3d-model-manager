@@ -41,17 +41,20 @@ export class TdmmCardEditor extends LitElement {
   static properties = {
     hass: { attribute: false },
     _cfg: { state: true },
+    _formTheme: { state: true },
     _tab: { state: true },
     _unavailable: { state: true },
   };
   declare hass?: HomeAssistant;
   declare _cfg?: NormalizedConfig;
+  declare _formTheme: Record<string, unknown>;
   declare _tab: TabId;
   declare _unavailable: boolean;
 
   constructor() {
     super();
     this._tab = "status";
+    this._formTheme = {};
     this._unavailable = false;
   }
 
@@ -69,6 +72,7 @@ export class TdmmCardEditor extends LitElement {
 
   setConfig(cfg: TdmmCardConfig): void {
     this._cfg = normalizeConfig(cfg);
+    this._formTheme = { ...this._cfg.theme };
   }
 
   async connectedCallback(): Promise<void> {
@@ -88,11 +92,12 @@ export class TdmmCardEditor extends LitElement {
     const c = this._cfg;
     if (!c) return;
     const v = e.detail.value;
+    this._formTheme = typeof v.theme === "object" && v.theme !== null ? { ...(v.theme as Record<string, unknown>) } : {};
     const next: NormalizedConfig = { ...c, theme: cleanTheme(v.theme) };
-    if (typeof v.device_id === "string") next.device_id = v.device_id;
+    next.device_id = typeof v.device_id === "string" ? v.device_id : "";
     if (c.kind === "printer") {
       if (TABS.includes(v.default_tab as TabId)) next.default_tab = v.default_tab as TabId;
-      if (Array.isArray(v.hide_tabs)) next.hide_tabs = v.hide_tabs.filter((t): t is TabId => TABS.includes(t as TabId));
+      next.hide_tabs = Array.isArray(v.hide_tabs) ? v.hide_tabs.filter((t): t is TabId => TABS.includes(t as TabId)) : [];
     }
     if (c.kind === "camera") next.camera_view = v.camera_view === "live" ? "live" : "auto";
     this._cfg = next;
@@ -118,7 +123,7 @@ export class TdmmCardEditor extends LitElement {
       default_tab: c.default_tab,
       hide_tabs: c.hide_tabs,
       camera_view: c.camera_view,
-      theme: { density: CARD_DEFAULTS.theme_keys.density, icon_set: CARD_DEFAULTS.theme_keys.icon_set, ...c.theme },
+      theme: { density: CARD_DEFAULTS.theme_keys.density, icon_set: CARD_DEFAULTS.theme_keys.icon_set, ...this._formTheme },
     };
     const printer = c.kind === "printer";
     return html`
