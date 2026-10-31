@@ -96,6 +96,7 @@ async def test_reconfigure_changes_url(hass: HomeAssistant, fake_tdmm: FakeTdmm,
     assert entry.unique_id == entry_unique_id(new_url, 1)
     assert entry.unique_id != entry_unique_id(fake_tdmm.url, 1)
     await hass.async_block_till_done()
+    assert entry.options == {CONF_PRINTER_IDS: [1]}
 
 
 async def test_reconfigure_to_existing_server_aborts_already_configured(
