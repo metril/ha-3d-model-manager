@@ -2,12 +2,30 @@
 
 from __future__ import annotations
 
+import asyncio
 import codecs
+import contextlib
+import json
+import logging
+import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+import aiohttp
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.util import dt as dt_util
+
+from .exceptions import TdmmAuthError, TdmmError
+
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Awaitable, Callable, Mapping
+    from datetime import datetime
+
+    from homeassistant.core import Event, HomeAssistant
+
+    from .coordinator import PrinterCoordinator, TdmmConfigEntry, TdmmHub
+
+_LOGGER = logging.getLogger(__name__)
 
 
 MAX_LINE_CHARS = 1024 * 1024
@@ -97,3 +115,179 @@ def event_type(ev: SseEvent, payload: Mapping[str, Any]) -> str | None:
         return ev.event
     t = payload.get("type")
     return t if isinstance(t, str) else None
+
+
+MAX_BACKOFF = 60.0
+
+
+def next_backoff(attempt: int, retry_ms: int | None, rand: Callable[[], float]) -> float:
+    """Exponential backoff with +-20 % jitter, floored by server ``retry:`` and capped at 60 s."""
+    floor = retry_ms / 1000 if retry_ms else 0.0
+    base = max(min(MAX_BACKOFF, 2 ** min(attempt, 10)), floor)
+    jitter = 1 + (rand() * 0.4 - 0.2)
+    return min(MAX_BACKOFF, max(floor, base * jitter))
+
+
+@dataclass
+class StreamStats:
+    connects: int = 0
+    disconnects: int = 0
+    events: int = 0
+    last_event_at: datetime | None = None
+    last_error: str | None = None
+
+
+class EventStream:
+    """One long-lived ``/api/events`` stream per entry, with reconnect and backoff."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: TdmmConfigEntry,
+        hub: TdmmHub,
+        coordinators: dict[int, PrinterCoordinator],
+        *,
+        on_auth_failed: Callable[[], None],
+        on_connected: Callable[[], None],
+        snapshot_timeout: float = 10.0,
+        stable_after: float = 60.0,
+        sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+        rand: Callable[[], float] = random.random,
+    ) -> None:
+        self._hass = hass
+        self._entry = entry
+        self._hub = hub
+        self._coordinators = coordinators
+        self._on_auth_failed = on_auth_failed
+        self._on_connected = on_connected
+        self._snapshot_timeout = snapshot_timeout
+        self._stable_after = stable_after
+        self._sleep = sleep
+        self._rand = rand
+        self._task: asyncio.Task[None] | None = None
+        self._retry_ms: int | None = None
+        self.stats = StreamStats()
+
+    @property
+    def running(self) -> bool:
+        return self._task is not None and not self._task.done()
+
+    def start(self) -> None:
+        if self.running:
+            return
+        self._task = self._entry.async_create_background_task(self._hass, self._run(), "tdmm_event_stream")
+        self._entry.async_on_unload(self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self._on_ha_stop))
+
+    def _on_ha_stop(self, _event: Event) -> None:
+        if self._task is not None:
+            self._task.cancel()
+
+    async def stop(self) -> None:
+        task, self._task = self._task, None
+        if task is None:
+            return
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+    async def _run(self) -> None:
+        loop = asyncio.get_running_loop()
+        attempt = 0
+        while True:
+            started = loop.time()
+            connected = False
+            try:
+                resp = await self._hub.api.open_events(self._coordinators)
+                connected = True
+                try:
+                    await self._consume(resp)
+                finally:
+                    resp.close()
+            except asyncio.CancelledError:
+                if connected:
+                    self._hub.connected = False
+                raise
+            except TdmmAuthError:
+                _LOGGER.error("3DMM rejected the API key; stopping event stream")
+                self._on_auth_failed()
+                return
+            except (TdmmError, aiohttp.ClientError, TimeoutError) as err:
+                self.stats.last_error = str(err) or type(err).__name__
+                _LOGGER.debug("Event stream error: %s", self.stats.last_error)
+            if connected:
+                self._disconnected()
+                if loop.time() - started >= self._stable_after:
+                    attempt = 0
+            delay = next_backoff(attempt, self._retry_ms, self._rand)
+            attempt += 1
+            _LOGGER.debug("Reconnecting event stream in %.1fs", delay)
+            await self._sleep(delay)
+
+    def _disconnected(self) -> None:
+        self.stats.disconnects += 1
+        self._hub.connected = False
+        for coord in self._coordinators.values():
+            coord.reset_snapshot()
+        for coord in self._coordinators.values():
+            coord.async_update_listeners()
+
+    async def _consume(self, resp: aiohttp.ClientResponse) -> None:
+        self.stats.connects += 1
+        self._hub.connected = True
+        parser = SseParser()
+        parser.retry_ms = self._retry_ms
+        fallback = asyncio.create_task(self._fallback(resp))
+        try:
+            async for chunk in resp.content.iter_any():
+                for ev in parser.feed(chunk):
+                    self._dispatch(ev)
+                self._retry_ms = parser.retry_ms
+        finally:
+            self._retry_ms = parser.retry_ms
+            fallback.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await fallback
+
+    async def _fallback(self, resp: aiohttp.ClientResponse) -> None:
+        """If no snapshot arrives in time, fetch one /status per missing printer."""
+        await asyncio.sleep(self._snapshot_timeout)
+        for pid, coord in self._coordinators.items():
+            if coord.raw is not None:
+                continue
+            try:
+                raw = await self._hub.api.status(pid)
+            except TdmmAuthError:
+                resp.close()
+                self._on_auth_failed()
+                return
+            except TdmmError as err:
+                _LOGGER.debug("Fallback status for printer %s failed: %s", pid, err)
+                continue
+            if coord.raw is None and isinstance(raw, dict):
+                coord.apply_snapshot(raw)
+        self._on_connected()
+
+    def _dispatch(self, ev: SseEvent) -> None:
+        try:
+            payload = json.loads(ev.data)
+        except ValueError:
+            return
+        if not isinstance(payload, dict):
+            return
+        kind = event_type(ev, payload)
+        if kind not in ("printer.status", "printer.delta", "print_job.updated"):
+            return
+        self.stats.events += 1
+        self.stats.last_event_at = dt_util.utcnow()
+        if kind == "print_job.updated":
+            data = {k: v for k, v in payload.items() if k != "type"}
+            self._hass.bus.async_fire("tdmm_print_job_updated", {**data, "entry_id": self._entry.entry_id})
+            return
+        coord = self._coordinators.get(payload.get("printer_id"))  # type: ignore[arg-type]
+        if coord is None:
+            _LOGGER.debug("Dropping %s for unknown printer %s", kind, payload.get("printer_id"))
+            return
+        if kind == "printer.status" and isinstance(payload.get("status"), dict):
+            coord.apply_snapshot(payload["status"])
+        elif kind == "printer.delta" and isinstance(payload.get("patch"), dict):
+            coord.apply_delta(payload["patch"])

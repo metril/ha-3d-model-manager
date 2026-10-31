@@ -38,12 +38,11 @@ def normalize_url(url: str) -> str:
 class TdmmApiClient:
     """Thin async wrapper over the 3DMM ext v2 REST surface."""
 
-    sse_sock_read: float = 45
-
     def __init__(self, session: aiohttp.ClientSession, base_url: str, api_key: str) -> None:
         self._session = session
         self.base_url = base_url.rstrip("/")
         self._api_key = api_key
+        self.sse_sock_read: float = 45.0
 
     async def _request(
         self,
