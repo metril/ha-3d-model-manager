@@ -1,3 +1,16 @@
 {
-  "title": "3D Model Manager"
+  "title": "3D Model Manager",
+  "entity": {
+    "binary_sensor": {
+      "online": { "name": "Online" },
+      "door_open": { "name": "Door" },
+      "printing": { "name": "Printing" },
+      "hms_active": { "name": "HMS alert" }
+    }
+  },
+  "exceptions": {
+    "missing_control_scope": { "message": "The API key does not have the control scope." },
+    "command_failed": { "message": "The command could not be sent to 3D Model Manager." },
+    "missing_read_scope": { "message": "The API key does not have the read scope." }
+  }
 }

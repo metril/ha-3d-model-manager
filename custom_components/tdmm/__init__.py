@@ -1,14 +1,66 @@
 """The 3D Model Manager integration."""
 
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from homeassistant.const import CONF_API_KEY, CONF_URL, CONF_VERIFY_SSL
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError, ConfigEntryNotReady
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+from . import repairs
+from .api import TdmmApiClient
+from .const import CONF_PRINTER_IDS, CONTROL_PLATFORMS, DOMAIN, PLATFORMS
+from .coordinator import PrinterCoordinator, TdmmHub, TdmmRuntime
+from .exceptions import TdmmAuthError, TdmmConnectionError
+from .sse import EventStream
+
+if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
+
+    from .coordinator import TdmmConfigEntry
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up a config entry (stub)."""
+def _platforms(hub: TdmmHub) -> list:
+    return [*PLATFORMS, *(CONTROL_PLATFORMS if hub.can_control else [])]
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> bool:
+    """Set up 3DMM from a config entry."""
+    session = async_get_clientsession(hass, verify_ssl=entry.data[CONF_VERIFY_SSL])
+    api = TdmmApiClient(session, entry.data[CONF_URL], entry.data[CONF_API_KEY])
+    try:
+        ping = await api.ping()
+        if "read" not in ping.scopes:
+            await repairs.async_set_missing_scopes(hass, entry, {"read"})
+            raise ConfigEntryError(translation_domain=DOMAIN, translation_key="missing_read_scope")
+        printers = await api.printers()
+    except TdmmAuthError as err:
+        await repairs.async_raise_invalid_key(hass, entry)
+        raise ConfigEntryAuthFailed from err
+    except TdmmConnectionError as err:
+        raise ConfigEntryNotReady from err
+
+    hub = TdmmHub(api=api, ping=ping)
+    selected = set(entry.options.get(CONF_PRINTER_IDS, [p.id for p in printers]))
+    coordinators = {p.id: PrinterCoordinator(hass, entry, hub, p) for p in printers if p.id in selected}
+    entry.runtime_data = TdmmRuntime(hub=hub, coordinators=coordinators)
+
+    def _auth_failed() -> None:
+        entry.async_start_reauth(hass)
+
+    def _connected() -> None:
+        entry.async_create_background_task(hass, repairs.async_clear_issues(hass, entry), "tdmm_clear_issues")
+
+    hub.stream = EventStream(hass, entry, hub, coordinators, on_auth_failed=_auth_failed, on_connected=_connected)
+    await hass.config_entries.async_forward_entry_setups(entry, _platforms(hub))
+    hub.stream.start()
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry (stub)."""
-    return True
+async def async_unload_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> bool:
+    """Unload a config entry."""
+    hub = entry.runtime_data.hub
+    if hub.stream is not None:
+        await hub.stream.stop()
+    return await hass.config_entries.async_unload_platforms(entry, _platforms(hub))
