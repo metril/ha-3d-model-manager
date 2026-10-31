@@ -116,6 +116,58 @@
       "ams_temperature": {
         "name": "Temperature"
       }
+    },
+    "light": {
+      "chamber_light": {
+        "name": "Chamber light"
+      }
+    },
+    "fan": {
+      "part_fan": {
+        "name": "Part fan"
+      },
+      "aux_fan": {
+        "name": "Aux fan"
+      },
+      "chamber_fan": {
+        "name": "Chamber fan"
+      }
+    },
+    "number": {
+      "nozzle_target_temperature": {
+        "name": "Nozzle target temperature"
+      },
+      "bed_target_temperature": {
+        "name": "Bed target temperature"
+      }
+    },
+    "select": {
+      "speed_profile": {
+        "name": "Speed profile",
+        "state": {
+          "silent": "Silent",
+          "standard": "Standard",
+          "sport": "Sport",
+          "ludicrous": "Ludicrous"
+        }
+      }
+    },
+    "button": {
+      "pause": {
+        "name": "Pause"
+      },
+      "resume": {
+        "name": "Resume"
+      },
+      "stop": {
+        "name": "Stop"
+      },
+      "home": {
+        "name": "Home"
+      },
+      "clear_hms": {
+        "name": "Clear HMS"
+      }
     }
   },
   "exceptions": {

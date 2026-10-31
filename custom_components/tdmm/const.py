@@ -11,4 +11,10 @@ MANUFACTURER = "Bambu Lab"
 
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 # Forwarded only when the API key has the ``control`` scope.
-CONTROL_PLATFORMS: list[Platform] = []
+CONTROL_PLATFORMS: list[Platform] = [
+    Platform.LIGHT,
+    Platform.FAN,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.BUTTON,
+]
