@@ -2,15 +2,116 @@
   "title": "3D Model Manager",
   "entity": {
     "binary_sensor": {
-      "online": { "name": "Online" },
-      "door_open": { "name": "Door" },
-      "printing": { "name": "Printing" },
-      "hms_active": { "name": "HMS alert" }
+      "online": {
+        "name": "Online"
+      },
+      "door_open": {
+        "name": "Door"
+      },
+      "printing": {
+        "name": "Printing"
+      },
+      "hms_active": {
+        "name": "HMS alert"
+      }
+    },
+    "sensor": {
+      "print_state": {
+        "name": "Print state",
+        "state": {
+          "idle": "Idle",
+          "prepare": "Prepare",
+          "running": "Running",
+          "pause": "Pause",
+          "finish": "Finish",
+          "failed": "Failed",
+          "slicing": "Slicing",
+          "unknown": "Unknown"
+        }
+      },
+      "progress": {
+        "name": "Progress"
+      },
+      "remaining_time": {
+        "name": "Remaining time"
+      },
+      "end_time": {
+        "name": "End time"
+      },
+      "current_layer": {
+        "name": "Current layer"
+      },
+      "total_layers": {
+        "name": "Total layers"
+      },
+      "nozzle_temperature": {
+        "name": "Nozzle temperature"
+      },
+      "nozzle_target_temperature": {
+        "name": "Nozzle target temperature"
+      },
+      "bed_temperature": {
+        "name": "Bed temperature"
+      },
+      "bed_target_temperature": {
+        "name": "Bed target temperature"
+      },
+      "chamber_temperature": {
+        "name": "Chamber temperature"
+      },
+      "stage": {
+        "name": "Stage"
+      },
+      "speed_profile": {
+        "name": "Speed profile",
+        "state": {
+          "silent": "Silent",
+          "standard": "Standard",
+          "sport": "Sport",
+          "ludicrous": "Ludicrous"
+        }
+      },
+      "wifi_signal": {
+        "name": "WiFi signal"
+      },
+      "current_model": {
+        "name": "Current model"
+      },
+      "print_error": {
+        "name": "Print error"
+      },
+      "active_filament_material": {
+        "name": "Active filament material"
+      },
+      "active_filament_color": {
+        "name": "Active filament color"
+      },
+      "firmware_version": {
+        "name": "Firmware version"
+      },
+      "nozzle_type": {
+        "name": "Nozzle type"
+      },
+      "nozzle_diameter": {
+        "name": "Nozzle diameter"
+      },
+      "external_spool_material": {
+        "name": "External spool material"
+      },
+      "external_spool_color": {
+        "name": "External spool color"
+      }
     }
   },
   "exceptions": {
-    "missing_control_scope": { "message": "The API key does not have the control scope." },
-    "command_failed": { "message": "The command could not be sent to 3D Model Manager." },
-    "missing_read_scope": { "message": "The API key does not have the read scope." }
+    "missing_control_scope": {
+      "message": "The API key does not have the control scope."
+    },
+    "command_failed": {
+      "message": "The command could not be sent to 3D Model Manager."
+    },
+    "missing_read_scope": {
+      "message": "The API key does not have the read scope."
+    }
   }
 }
