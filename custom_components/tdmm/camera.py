@@ -76,6 +76,8 @@ class TdmmCamera(TdmmEntity, Camera):
         except TdmmError:
             return None
         try:
-            return await async_aiohttp_proxy_stream(self.hass, request, resp.content, resp.headers[CONTENT_TYPE])
+            return await async_aiohttp_proxy_stream(
+                self.hass, request, resp.content, resp.headers.get(CONTENT_TYPE, "multipart/x-mixed-replace")
+            )
         finally:
             resp.release()
