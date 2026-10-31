@@ -1,5 +1,51 @@
 {
   "title": "3D Model Manager",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to 3D Model Manager",
+        "description": "Enter the address of your 3D Model Manager server and an API key with the read scope (add control to operate printers).",
+        "data": {
+          "url": "Server URL",
+          "api_key": "API key",
+          "verify_ssl": "Verify SSL certificate"
+        }
+      },
+      "printers": {
+        "title": "Select printers",
+        "description": "Choose the printers to add.{control_warning}",
+        "data": {
+          "printer_ids": "Printers"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the server.",
+      "invalid_auth": "The API key was rejected.",
+      "missing_read_scope": "The API key does not have the read scope.",
+      "no_printers": "No printers are available to this API key.",
+      "invalid_url": "Enter a valid http(s) URL."
+    },
+    "abort": {
+      "already_configured": "This server and API key are already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Printers",
+        "data": {
+          "printer_ids": "Printers"
+        }
+      }
+    },
+    "error": {
+      "no_printers": "Select at least one printer."
+    },
+    "abort": {
+      "cannot_connect": "Could not connect to the server."
+    }
+  },
   "entity": {
     "binary_sensor": {
       "online": { "name": "Online" },

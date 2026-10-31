@@ -46,6 +46,7 @@ async def test_steady_state_request_budget(hass: HomeAssistant, fake_tdmm: FakeT
     await until(lambda: coord.data is not None)
     for i in range(5):
         await fake_tdmm.push("printer.delta", {"printer_id": 1, "patch": {"mc_percent": 50 + i}})
+    await until(lambda: coord.data is not None and coord.data.mc_percent == 54)
     await hass.async_block_till_done()
     assert dict(fake_tdmm.requests) == {"/api/ext/v2/ping": 1, "/api/ext/v2/printers": 1, "/api/events": 1}
     assert fake_tdmm.requests["/api/ext/v2/printers/1/status"] == 0

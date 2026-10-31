@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-    from .coordinator import PrinterCoordinator, TdmmConfigEntry
+    from .coordinator import TdmmConfigEntry
     from .models import PrinterStatus
 
 PARALLEL_UPDATES = 0
@@ -69,9 +69,6 @@ async def async_setup_entry(
 
 class TdmmBinarySensor(TdmmEntity, BinarySensorEntity):
     entity_description: TdmmBinarySensorDescription
-
-    def __init__(self, coordinator: PrinterCoordinator, description: TdmmBinarySensorDescription) -> None:
-        super().__init__(coordinator, description)
 
     @property
     def is_on(self) -> bool | None:

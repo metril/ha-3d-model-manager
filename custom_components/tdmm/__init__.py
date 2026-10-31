@@ -12,16 +12,17 @@ from . import repairs
 from .api import TdmmApiClient
 from .const import CONF_PRINTER_IDS, CONTROL_PLATFORMS, DOMAIN, PLATFORMS
 from .coordinator import PrinterCoordinator, TdmmHub, TdmmRuntime
-from .exceptions import TdmmAuthError, TdmmConnectionError
+from .exceptions import TdmmAuthError, TdmmError
 from .sse import EventStream
 
 if TYPE_CHECKING:
+    from homeassistant.const import Platform
     from homeassistant.core import HomeAssistant
 
     from .coordinator import TdmmConfigEntry
 
 
-def _platforms(hub: TdmmHub) -> list:
+def _platforms(hub: TdmmHub) -> list[Platform]:
     return [*PLATFORMS, *(CONTROL_PLATFORMS if hub.can_control else [])]
 
 
@@ -38,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> bool
     except TdmmAuthError as err:
         await repairs.async_raise_invalid_key(hass, entry)
         raise ConfigEntryAuthFailed from err
-    except TdmmConnectionError as err:
+    except TdmmError as err:
         raise ConfigEntryNotReady from err
 
     hub = TdmmHub(api=api, ping=ping)
