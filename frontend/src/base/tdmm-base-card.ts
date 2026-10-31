@@ -55,9 +55,9 @@ export abstract class TdmmBaseCard extends LitElement {
     return this._hass as HomeAssistant;
   }
 
-  private refresh(): void {
+  protected refresh(): void {
     this.resolved = this._hass && this.config ? resolveEntities(this._hass, this.config.device_id) : EMPTY;
-    this.usedIds = this.config ? this.computeUsedIds() : [];
+    this.usedIds = this.config ? this.computeUsedIds().filter(Boolean) : [];
   }
 
   protected abstract visibleBlocks(): BlockEntry[];
@@ -113,7 +113,11 @@ export abstract class TdmmBaseCard extends LitElement {
     const out: TemplateResult[] = [];
     for (const b of blocks) {
       if (b.hidden) continue;
-      const r = getBlock(b.type).render(ctx);
+      let r;
+      try { r = getBlock(b.type).render(ctx); } catch (e) {
+        console.warn(`tdmm: skipping block "${b.type}"`, e);
+        continue;
+      }
       if (r !== nothing) out.push(r);
     }
     return html`${out}`;
