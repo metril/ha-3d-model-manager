@@ -53,7 +53,7 @@ export function makeHass(opts: MakeHassOpts = {}): HomeAssistant {
   for (const key of Object.keys(ENTITY_KEYS) as EntityKey[]) {
     if (omit.has(key)) continue;
     const prefs = ENTITY_KEYS[key];
-    // register the lowest-preference domain first so tests prove preference order, not registry order
+    // both domains registered; tests delete the preferred one to prove the fallback
     for (const domain of [...prefs].reverse()) addKey(key, domain);
   }
 

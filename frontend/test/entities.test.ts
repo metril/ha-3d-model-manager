@@ -27,6 +27,31 @@ describe("resolveEntities", () => {
     expect(resolveEntities(h, "dev_p1").byKey.speed_profile).toMatch(/^select\./);
   });
 
+  it("falls back to sensor when number/select entity is absent", () => {
+    const h = makeHass();
+    for (const id of Object.keys(h.entities)) {
+      if (/^(number|select)\./.test(id)) { delete h.entities[id]; delete h.states[id]; }
+    }
+    const r = resolveEntities(h, "dev_p1");
+    expect(r.byKey.nozzle_target_temperature).toMatch(/^sensor\./);
+    expect(r.byKey.bed_target_temperature).toMatch(/^sensor\./);
+    expect(r.byKey.speed_profile).toMatch(/^sensor\./);
+  });
+
+  it("sorts AMS units and slots numerically, not by entity id", () => {
+    const patch = (id: string, attributes: Record<string, unknown>) => [id, { attributes }] as const;
+    const states = Object.fromEntries([
+      ...["hum", "temp"].map((k) => patch(`sensor.ams_1_${k}_renamed`, { ams_unit: 10 })),
+      ...[["t1", 4], ["t4", 1]].flatMap(([t, slot]) =>
+        ["mat", "col", "rem"].map((k) => patch(`sensor.ams_1_${t}_${k}_renamed`, { ams_unit: 10, slot }))),
+      ...["t2", "t3"].flatMap((t, i) => ["mat", "col", "rem"].map((k) => patch(`sensor.ams_1_${t}_${k}_renamed`, { ams_unit: 10, slot: i + 2 }))),
+    ]);
+    const r = resolveEntities(makeHass({ amsUnits: 2, states }), "dev_p1");
+    expect(r.ams.map((u) => u.unit)).toEqual([2, 10]);
+    expect(r.ams[1]!.slots.map((s) => s.slot)).toEqual([1, 2, 3, 4]);
+    expect(r.ams[1]!.slots[0]!.material).toBe("sensor.ams_1_t4_mat_renamed");
+  });
+
   it("collects AMS from child device sorted and grouped by ams_unit/slot attributes", () => {
     const r = resolveEntities(makeHass({ amsUnits: 2 }), "dev_p1");
     expect(r.ams.map((u) => u.unit)).toEqual([1, 2]);

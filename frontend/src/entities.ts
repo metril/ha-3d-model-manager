@@ -119,14 +119,14 @@ export function resolveEntities(hass: HomeAssistant, deviceId: string): Resolved
     const attrs = hass.states[e.entity_id]?.attributes;
     const unitNo = num(attrs?.ams_unit);
     if (unitNo === undefined) continue;
-    if (tk in TRAY_FIELD) {
+    if (Object.hasOwn(TRAY_FIELD, tk)) {
       const slotNo = num(attrs?.slot);
       if (slotNo === undefined) continue;
       const u = unitOf(unitNo);
       let s = u.slots.find((x) => x.slot === slotNo);
       if (!s) u.slots.push((s = { slot: slotNo }));
       s[TRAY_FIELD[tk as keyof typeof TRAY_FIELD]] = e.entity_id;
-    } else if (tk in UNIT_FIELD) {
+    } else if (Object.hasOwn(UNIT_FIELD, tk)) {
       unitOf(unitNo)[UNIT_FIELD[tk as keyof typeof UNIT_FIELD]] = e.entity_id;
     }
   }
