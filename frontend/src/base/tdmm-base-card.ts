@@ -1,3 +1,4 @@
+import "../blocks/index.ts";
 import { LitElement, css, html, nothing, unsafeCSS, type CSSResultGroup, type TemplateResult } from "lit";
 import { normalizeConfig, type BlockEntry, type NormalizedConfig } from "../config.ts";
 import { resolveEntities, type EntityKey, type ResolvedEntities } from "../entities.ts";
