@@ -14,6 +14,7 @@ dev = [
     "pytest-split",
     "aioresponses",
     "pytest-aiohttp",
+    "pyturbojpeg>=2.6.1",
 ]
 
 [tool.pytest.ini_options]

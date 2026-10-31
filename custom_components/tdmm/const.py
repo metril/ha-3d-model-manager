@@ -9,7 +9,7 @@ CONF_VERIFY_SSL = "verify_ssl"
 CONF_PRINTER_IDS = "printer_ids"
 MANUFACTURER = "Bambu Lab"
 
-PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.CAMERA, Platform.SENSOR]
 # Forwarded only when the API key has the ``control`` scope.
 CONTROL_PLATFORMS: list[Platform] = [
     Platform.LIGHT,
