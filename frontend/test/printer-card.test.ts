@@ -47,10 +47,21 @@ describe("tdmm-printer-card", () => {
     const h = makeHass();
     const el = await mk({}, h);
     const spy = vi.spyOn(el as unknown as { render(): unknown }, "render");
-    const id = h.entities && Object.values(h.entities).find((e) => e.translation_key === "aux_fan")!.entity_id;
+    const id = Object.values(h.entities).find((e) => e.translation_key === "aux_fan")!.entity_id;
     el.hass = { ...h, states: { ...h.states, [id]: { ...h.states[id]!, state: "on" } } };
     await el.updateComplete;
     expect(spy).not.toHaveBeenCalled();
+  });
+  it("control tab re-renders on aux_fan change", async () => {
+    const h = makeHass();
+    const el = await mk({}, h);
+    tabBtn(el, "control").click();
+    await el.updateComplete;
+    const spy = vi.spyOn(el as unknown as { render(): unknown }, "render");
+    const id = Object.values(h.entities).find((e) => e.translation_key === "aux_fan")!.entity_id;
+    el.hass = { ...h, states: { ...h.states, [id]: { ...h.states[id]!, state: "on" } } };
+    await el.updateComplete;
+    expect(spy).toHaveBeenCalled();
   });
   it("light and dark both render", async () => {
     for (const dark of [true, false]) {

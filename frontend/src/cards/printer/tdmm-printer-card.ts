@@ -1,6 +1,7 @@
 import { css, html, nothing, type CSSResultGroup, type TemplateResult } from "lit";
 import { TdmmBaseCard } from "../../base/tdmm-base-card.ts";
-import { CARD_TYPES, type BlockEntry, type TabId, type TdmmCardConfig } from "../../config.ts";
+import { type BlockEntry, type TabId, type TdmmCardConfig } from "../../config.ts";
+import { stubConfigFor } from "../../entities.ts";
 import type { HomeAssistant } from "../../ha-types.ts";
 import type { BlockContext } from "../../blocks/types.ts";
 
@@ -83,9 +84,6 @@ export class TdmmPrinterCard extends TdmmBaseCard {
   }
 
   static getStubConfig(hass: HomeAssistant): TdmmCardConfig {
-    const hit = Object.values(hass?.entities ?? {}).find(
-      (e) => e.platform === "tdmm" && e.translation_key === "online" && e.entity_id.startsWith("binary_sensor.") && e.device_id,
-    );
-    return { type: CARD_TYPES.printer, device_id: hit?.device_id ?? "" };
+    return stubConfigFor("printer", hass);
   }
 }

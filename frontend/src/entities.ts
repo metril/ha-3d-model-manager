@@ -1,3 +1,4 @@
+import { CARD_TYPES, type CardKind, type TdmmCardConfig } from "./config.ts";
 import type { HomeAssistant } from "./ha-types.js";
 
 export type EntityKey =
@@ -155,4 +156,12 @@ export function allEntityIds(r: ResolvedEntities): string[] {
     for (const s of u.slots) for (const id of [s.material, s.color, s.remaining]) if (id) ids.push(id);
   }
   return ids;
+}
+
+/** Stub config for the card picker: first tdmm printer device found. */
+export function stubConfigFor(kind: CardKind, hass: HomeAssistant | undefined): TdmmCardConfig {
+  const hit = Object.values(hass?.entities ?? {}).find(
+    (e) => e.platform === "tdmm" && e.translation_key === "online" && e.entity_id.startsWith("binary_sensor.") && e.device_id,
+  );
+  return { type: CARD_TYPES[kind], device_id: hit?.device_id ?? "" };
 }
