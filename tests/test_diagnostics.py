@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from homeassistant.helpers import issue_registry as ir
 
 from custom_components.tdmm import repairs
-from custom_components.tdmm.const import CONF_API_KEY, DOMAIN
+from custom_components.tdmm.const import DOMAIN
 from custom_components.tdmm.diagnostics import async_get_config_entry_diagnostics
 
 from .conftest import setup_entry, setup_integration, until
@@ -25,7 +25,7 @@ async def test_diagnostics_redacts_secrets(hass: HomeAssistant, fake_tdmm: FakeT
     result = await async_get_config_entry_diagnostics(hass, entry)
     dumped = json.dumps(result)
     assert result["entry"]["data"]["api_key"] == "**REDACTED**"
-    assert f": {json.dumps(entry.data[CONF_API_KEY])}" not in dumped
+    assert "tdmm-test-key-123" not in dumped
     assert fake_tdmm.url not in dumped
     assert fake_tdmm.url.split("://")[1] not in dumped
     assert result["printers"][1]["info"]["serial"] == "**REDACTED**"

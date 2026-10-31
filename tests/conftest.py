@@ -58,7 +58,7 @@ async def setup_entry(hass: HomeAssistant, fake: FakeTdmm, *, printer_ids=(1,)) 
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="3DMM",
-        data={CONF_URL: fake.url, CONF_API_KEY: "key", CONF_VERIFY_SSL: True},
+        data={CONF_URL: fake.url, CONF_API_KEY: "tdmm-test-key-123", CONF_VERIFY_SSL: True},
         options={CONF_PRINTER_IDS: list(printer_ids)},
         unique_id=f"fake-{fake.url}",
     )

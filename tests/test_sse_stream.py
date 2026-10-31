@@ -66,7 +66,7 @@ async def _make(
 ) -> Harness:
     h = Harness()
     entry = await setup_entry(hass, fake, printer_ids=ids)
-    h.api = TdmmApiClient(async_get_clientsession(hass), fake.url, "key")
+    h.api = TdmmApiClient(async_get_clientsession(hass), fake.url, "tdmm-test-key-123")
     if sock_read is not None:
         h.api.sse_sock_read = sock_read
     h.hub = TdmmHub(h.api, PingResult(key_id=1, scopes=frozenset({"read"})))

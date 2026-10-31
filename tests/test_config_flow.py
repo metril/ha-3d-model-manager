@@ -25,7 +25,7 @@ PRINTERS = [
 
 
 def _creds(fake: FakeTdmm, url: str | None = None) -> dict:
-    return {CONF_URL: url or fake.url, CONF_API_KEY: "key", CONF_VERIFY_SSL: True}
+    return {CONF_URL: url or fake.url, CONF_API_KEY: "tdmm-test-key-123", CONF_VERIFY_SSL: True}
 
 
 async def _start(hass: HomeAssistant, fake: FakeTdmm, url: str | None = None):
@@ -43,7 +43,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant, fake_tdmm: FakeTdmm)
         assert result["description_placeholders"]["control_warning"] == ""
         result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_PRINTER_IDS: ["1", "2"]})
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["data"] == {CONF_URL: fake_tdmm.url, CONF_API_KEY: "key", CONF_VERIFY_SSL: True}
+    assert result["data"] == {CONF_URL: fake_tdmm.url, CONF_API_KEY: "tdmm-test-key-123", CONF_VERIFY_SSL: True}
     assert result["options"] == {CONF_PRINTER_IDS: [1, 2]}
     entry = hass.config_entries.async_entries(DOMAIN)[0]
     assert entry.unique_id == entry_unique_id(fake_tdmm.url, 1)
