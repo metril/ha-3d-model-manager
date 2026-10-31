@@ -170,6 +170,7 @@ class EventStream:
         self._rand = rand
         self._task: asyncio.Task[None] | None = None
         self._retry_ms: int | None = None
+        # Terminal: ends the loop. A reauth creates a new EventStream, so it is never reset.
         self._auth_failed = False
         self.stats = StreamStats()
 
@@ -241,7 +242,10 @@ class EventStream:
         for coord in self._coordinators.values():
             coord.reset_snapshot()
         for coord in self._coordinators.values():
-            coord.async_update_listeners()
+            try:
+                coord.async_update_listeners()
+            except Exception:
+                _LOGGER.exception("Listener failed while marking printer unavailable")
 
     async def _consume(self, resp: aiohttp.ClientResponse) -> None:
         self.stats.connects += 1

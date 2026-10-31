@@ -389,3 +389,19 @@ async def test_fallback_401_calls_auth_failed_once(fake_tdmm, started) -> None:
     h.auth_failed.assert_called_once()
     h.connected.assert_not_called()
     assert fake_tdmm.requests["/api/events"] == 1
+
+
+async def test_listener_exception_on_disconnect_does_not_kill_stream(fake_tdmm, started) -> None:
+    fake_tdmm.statuses[1] = _raw()
+    h = await started()
+    await _until(lambda: h.coords[1].data is not None)
+
+    def boom() -> None:
+        raise RuntimeError("listener")
+
+    h.coords[1].async_add_listener(boom)
+    await fake_tdmm.drop_streams()
+    await _until(lambda: h.stream.stats.connects == 2)
+    await fake_tdmm.push("printer.delta", {"printer_id": 1, "patch": {"mc_percent": 77}})
+    await _until(lambda: h.coords[1].raw is not None and h.coords[1].raw["mc_percent"] == 77)
+    assert h.stream.running
