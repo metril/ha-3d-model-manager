@@ -33,7 +33,11 @@ def test_comment_ping_ignored():
 def test_split_across_every_byte_boundary():
     raw = ": ping\r\nevent: a\r\ndata: x\r\ndata: y\r\n\r\ndata: \xc3\xa9\r\rdata: z\n\n".encode("latin-1")
     whole, _ = parse(raw)
-    assert len(whole) == 3
+    assert whole == [
+        SseEvent("a", "x\ny", None, None),
+        SseEvent("message", "\xe9", None, None),
+        SseEvent("message", "z", None, None),
+    ]
     assert parse(raw, 1)[0] == whole
 
 
@@ -78,3 +82,25 @@ def test_event_type_from_data_type():
     assert event_type(ev, {"type": "printer.delta"}) == "printer.delta"
     assert event_type(ev, {}) is None
     assert event_type(ev, {"type": 3}) is None
+
+
+def test_cr_then_lf_in_separate_chunks():
+    p = SseParser()
+    out = p.feed(b"data: a\r") + p.feed(b"\n") + p.feed(b"\n")
+    assert [e.data for e in out] == ["a"]
+
+
+def test_id_persists_across_events():
+    evs, _ = parse(b"id: 1\ndata: a\n\ndata: b\n\nid: 2\ndata: c\n\nid: x\0y\ndata: d\n\n")
+    assert [e.id for e in evs] == ["1", "1", "2", "2"]
+
+
+def test_line_buffer_cap_resets():
+    p = SseParser()
+    assert p.feed(b"data: " + b"x" * (2 * 1024 * 1024)) == []
+    assert [e.data for e in p.feed(b"\ndata: ok\n\n")] == ["ok"]
+
+
+def test_data_without_space_and_partial_block_discarded():
+    evs, _ = parse(b"data:x\n\ndata: partial\n")
+    assert [e.data for e in evs] == ["x"]

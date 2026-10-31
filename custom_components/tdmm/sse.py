@@ -10,6 +10,9 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 
+MAX_LINE_CHARS = 1024 * 1024
+
+
 @dataclass(frozen=True, slots=True)
 class SseEvent:
     """A dispatched SSE event."""
@@ -21,7 +24,11 @@ class SseEvent:
 
 
 class SseParser:
-    """Incremental parser; feed raw bytes, get completed events."""
+    """Incremental parser; feed raw bytes, get completed events.
+
+    Per WHATWG, the last ``id`` persists across events until overwritten (an
+    ``id`` containing NUL is ignored). An unterminated line over 1 MiB is dropped.
+    """
 
     def __init__(self) -> None:
         self.retry_ms: int | None = None
@@ -29,12 +36,12 @@ class SseParser:
         self._buf = ""
         self._prev_cr = False
         self._started = False
+        self._id: str | None = None
         self._reset_block()
 
     def _reset_block(self) -> None:
         self._event = ""
         self._data: list[str] = []
-        self._id: str | None = None
         self._block_retry: int | None = None
 
     def feed(self, chunk: bytes) -> list[SseEvent]:
@@ -47,11 +54,12 @@ class SseParser:
             text = text.removeprefix("﻿")
         if self._prev_cr and text.startswith("\n"):
             text = text[1:]
-        if text:
-            self._prev_cr = text.endswith("\r")
+        self._prev_cr = text.endswith("\r")
         text = text.replace("\r\n", "\n").replace("\r", "\n")
         self._buf += text
         *lines, self._buf = self._buf.split("\n")
+        if len(self._buf) > MAX_LINE_CHARS:
+            self._buf = ""
         events: list[SseEvent] = []
         for line in lines:
             ev = self._line(line)
