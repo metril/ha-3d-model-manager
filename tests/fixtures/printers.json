@@ -1,0 +1,6 @@
+[
+  {"id": 1, "name": "A1 Mini", "kind": "bambu_lan", "host": "10.0.0.5", "serial": "0309DA123456789", "model": "A1 mini", "nozzle_mm": 0.4, "enabled": true, "options": {}, "access_code_set": true,
+   "capabilities": {"model_key": "a1_mini", "chamber_temp": false, "door": false, "aux_fan": true, "chamber_fan": false, "camera": "a1", "verified": true}},
+  {"id": 2, "name": "X1C", "kind": "bambu_lan", "host": "10.0.0.6", "serial": "00M09A987654321", "model": "X1C", "enabled": true, "options": {}, "access_code_set": true,
+   "capabilities": {"chamber_temp": true, "door": true, "aux_fan": true, "chamber_fan": true, "camera": "rtsp"}}
+]

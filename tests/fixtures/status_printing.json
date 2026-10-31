@@ -1,0 +1,19 @@
+{
+  "online": true, "gcode_state": "RUNNING", "mc_percent": 42, "layer_num": 80, "total_layer_num": 190,
+  "mc_remaining_time": 95, "print_error": 0, "nozzle_temper": 219.6, "nozzle_target": 220.0,
+  "bed_temper": 59.8, "bed_target": 60.0, "chamber_temper": 31.0, "chamber_target": 0.0,
+  "subtask_name": "benchy", "wifi_signal": "-52dBm",
+  "trays": [
+    {"slot": 0, "ams_unit": 0, "tray": 0, "color": "#FF0000", "material": "PLA", "tray_type": "PLA", "tray_uuid": "A1B2", "remain_pct": 80, "cali_idx": -1, "k_value": 0.02, "tray_info_idx": "GFA00", "sub_brand": "PLA Basic", "nozzle_min": 190, "nozzle_max": 240, "spool": null},
+    {"slot": 1, "ams_unit": 0, "tray": 1, "color": null, "material": null, "tray_type": null, "tray_uuid": null, "remain_pct": null, "sub_brand": null}
+  ],
+  "fan_part_pct": 100, "fan_aux_pct": 40, "fan_chamber_pct": 0, "light_on": true, "speed_level": 2,
+  "stage": "printing", "hms": [{"attr": 83886336, "code": 65540}], "sdcard": true, "nozzle_type": "stainless_steel",
+  "nozzle_mm": 0.4, "firmware": {"ota": "01.08.02.00", "ams": [{"id": 0, "sw_ver": "00.00.06.49"}]},
+  "ams_units": [{"id": 0, "humidity": 18.0, "temp": 27.5, "serial": "AMS123", "fw": "1.0", "label": "Main", "dry_status": 0}],
+  "ext_tray": {"slot": 254, "color": "#00FF00", "material": "PETG", "tray_type": "PETG", "remain_pct": null},
+  "print_thumbnail_key": "abc123/plates/1/thumb", "ipcam": true, "tray_now": 0, "door_open": false,
+  "print_options": {}, "extruders": [], "awaiting_plate_clear": false,
+  "active_tray": {"slot": 0, "ams_unit": 0, "tray": 0, "color": "#FF0000", "material": "PLA", "tray_type": "PLA", "remain_pct": 80},
+  "print_job": {"print_job_id": 7, "file_id": 11, "model_id": 3, "model_name": "Benchy", "revision_id": 5, "plate": 1, "started_at": "2026-10-30T10:00:00Z", "origin": "web"}
+}

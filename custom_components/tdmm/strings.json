@@ -1,0 +1,269 @@
+{
+  "title": "3D Model Manager",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to 3D Model Manager",
+        "description": "Enter the address of your 3D Model Manager server and an API key with the read scope (add control to operate printers).",
+        "data": {
+          "url": "Server URL",
+          "api_key": "API key",
+          "verify_ssl": "Verify SSL certificate"
+        }
+      },
+      "printers": {
+        "title": "Select printers",
+        "description": "Choose the printers to add.{control_warning}",
+        "data": {
+          "printer_ids": "Printers"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate",
+        "description": "The API key for {name} was rejected. Enter a new key for the same API key entry.",
+        "data": {
+          "api_key": "API key"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure 3D Model Manager",
+        "data": {
+          "url": "Server URL",
+          "api_key": "API key",
+          "verify_ssl": "Verify SSL certificate"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the server.",
+      "invalid_auth": "The API key was rejected.",
+      "missing_read_scope": "The API key does not have the read scope.",
+      "no_printers": "No printers are available to this API key.",
+      "invalid_url": "Enter a valid http(s) URL."
+    },
+    "abort": {
+      "already_configured": "This server and API key are already configured.",
+      "wrong_key": "This API key is a different key than the one configured. Use the original key, or add a new entry.",
+      "reauth_successful": "Re-authentication was successful.",
+      "reconfigure_successful": "Reconfiguration was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Printers",
+        "data": {
+          "printer_ids": "Printers"
+        }
+      }
+    },
+    "error": {
+      "no_printers": "Select at least one printer."
+    },
+    "abort": {
+      "cannot_connect": "Could not connect to the server.",
+      "invalid_auth": "The API key was rejected."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "online": {
+        "name": "Online"
+      },
+      "door_open": {
+        "name": "Door"
+      },
+      "printing": {
+        "name": "Printing"
+      },
+      "hms_active": {
+        "name": "HMS alert"
+      }
+    },
+    "sensor": {
+      "print_state": {
+        "name": "Print state",
+        "state": {
+          "idle": "Idle",
+          "prepare": "Prepare",
+          "running": "Running",
+          "pause": "Pause",
+          "finish": "Finish",
+          "failed": "Failed",
+          "slicing": "Slicing",
+          "unknown": "Unknown"
+        }
+      },
+      "progress": {
+        "name": "Progress"
+      },
+      "remaining_time": {
+        "name": "Remaining time"
+      },
+      "end_time": {
+        "name": "End time"
+      },
+      "current_layer": {
+        "name": "Current layer"
+      },
+      "total_layers": {
+        "name": "Total layers"
+      },
+      "nozzle_temperature": {
+        "name": "Nozzle temperature"
+      },
+      "nozzle_target_temperature": {
+        "name": "Nozzle target temperature"
+      },
+      "bed_temperature": {
+        "name": "Bed temperature"
+      },
+      "bed_target_temperature": {
+        "name": "Bed target temperature"
+      },
+      "chamber_temperature": {
+        "name": "Chamber temperature"
+      },
+      "stage": {
+        "name": "Stage"
+      },
+      "speed_profile": {
+        "name": "Speed profile",
+        "state": {
+          "silent": "Silent",
+          "standard": "Standard",
+          "sport": "Sport",
+          "ludicrous": "Ludicrous"
+        }
+      },
+      "wifi_signal": {
+        "name": "WiFi signal"
+      },
+      "current_model": {
+        "name": "Current model"
+      },
+      "print_error": {
+        "name": "Print error"
+      },
+      "active_filament_material": {
+        "name": "Active filament material"
+      },
+      "active_filament_color": {
+        "name": "Active filament color"
+      },
+      "firmware_version": {
+        "name": "Firmware version"
+      },
+      "nozzle_type": {
+        "name": "Nozzle type"
+      },
+      "nozzle_diameter": {
+        "name": "Nozzle diameter"
+      },
+      "external_spool_material": {
+        "name": "External spool material"
+      },
+      "external_spool_color": {
+        "name": "External spool color"
+      },
+      "tray_material": {
+        "name": "Tray {slot} material"
+      },
+      "tray_color": {
+        "name": "Tray {slot} color"
+      },
+      "tray_remaining": {
+        "name": "Tray {slot} remaining"
+      },
+      "ams_humidity": {
+        "name": "Humidity"
+      },
+      "ams_temperature": {
+        "name": "Temperature"
+      }
+    },
+    "camera": {
+      "camera": {
+        "name": "Camera"
+      }
+    },
+    "image": {
+      "print_thumbnail": {
+        "name": "Print thumbnail"
+      }
+    },
+    "light": {
+      "chamber_light": {
+        "name": "Chamber light"
+      }
+    },
+    "fan": {
+      "part_fan": {
+        "name": "Part fan"
+      },
+      "aux_fan": {
+        "name": "Aux fan"
+      },
+      "chamber_fan": {
+        "name": "Chamber fan"
+      }
+    },
+    "number": {
+      "nozzle_target_temperature": {
+        "name": "Nozzle target temperature"
+      },
+      "bed_target_temperature": {
+        "name": "Bed target temperature"
+      }
+    },
+    "select": {
+      "speed_profile": {
+        "name": "Speed profile",
+        "state": {
+          "silent": "Silent",
+          "standard": "Standard",
+          "sport": "Sport",
+          "ludicrous": "Ludicrous"
+        }
+      }
+    },
+    "button": {
+      "pause": {
+        "name": "Pause"
+      },
+      "resume": {
+        "name": "Resume"
+      },
+      "stop": {
+        "name": "Stop"
+      },
+      "home": {
+        "name": "Home"
+      },
+      "clear_hms": {
+        "name": "Clear HMS"
+      }
+    }
+  },
+  "exceptions": {
+    "missing_control_scope": {
+      "message": "The API key does not have the control scope."
+    },
+    "command_failed": {
+      "message": "The command could not be sent to 3D Model Manager."
+    },
+    "missing_read_scope": {
+      "message": "The API key does not have the read scope."
+    }
+  },
+  "issues": {
+    "invalid_api_key": {
+      "title": "3D Model Manager API key rejected",
+      "description": "The API key for {name} was rejected by the server. Re-authenticate the integration with a valid key."
+    },
+    "missing_scope": {
+      "title": "API key missing the {scope} scope",
+      "description": "The API key for this server does not have the {scope} scope. Some features are unavailable until you reconfigure the integration with a key that has it."
+    }
+  }
+}

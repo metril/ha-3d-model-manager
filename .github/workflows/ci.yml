@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - name: mypy (advisory)
+        run: uv run mypy custom_components/tdmm
+        continue-on-error: true
+
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.13", "3.14"]
+        group: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v9.0.0
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run pytest --splits 4 --group ${{ matrix.group }} -n auto
+
+  version:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Version tag must be new when code changes
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: |
+          if ! git diff --name-only "$BASE...HEAD" | grep -qE '^(custom_components/|frontend/)'; then
+            echo "No code changes; skipping version check."
+            exit 0
+          fi
+          VERSION=$(jq -r .version custom_components/tdmm/manifest.json)
+          if git ls-remote --tags origin "refs/tags/v$VERSION" | grep -q .; then
+            echo "::error::Tag v$VERSION already exists; bump version in custom_components/tdmm/manifest.json."
+            exit 1
+          fi
+
+  cards:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm install -g npm@11.12.1
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run docs
+      - name: Bundle and docs are up to date
+        run: git diff --exit-code -- ../custom_components/tdmm/frontend/tdmm-cards.js ../docs/theming.md
+
+  # Single required check; skipped jobs (e.g. PR-only `version`) count as pass.
+  tests:
+    if: always()
+    needs: [lint, pytest, cards, version]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate results
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" || "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            exit 1
+          fi
