@@ -7,7 +7,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run --coverage",
-    "build": "node esbuild.config.mjs"
+    "build": "node esbuild.config.mjs",
+    "docs": "node scripts/gen-theming-docs.ts"
   },
   "dependencies": { "lit": "3.3.3" },
   "devDependencies": {

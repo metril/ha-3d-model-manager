@@ -54,8 +54,9 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - name: Bundle is up to date
-        run: git diff --exit-code -- ../custom_components/tdmm/frontend/tdmm-cards.js
+      - run: npm run docs
+      - name: Bundle and docs are up to date
+        run: git diff --exit-code -- ../custom_components/tdmm/frontend/tdmm-cards.js ../docs/theming.md
 
   # Single required check; skipped jobs (e.g. PR-only `version`) count as pass.
   tests:
