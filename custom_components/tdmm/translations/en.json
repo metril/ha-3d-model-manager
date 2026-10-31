@@ -100,6 +100,21 @@
       },
       "external_spool_color": {
         "name": "External spool color"
+      },
+      "tray_material": {
+        "name": "Tray {slot} material"
+      },
+      "tray_color": {
+        "name": "Tray {slot} color"
+      },
+      "tray_remaining": {
+        "name": "Tray {slot} remaining"
+      },
+      "ams_humidity": {
+        "name": "Humidity"
+      },
+      "ams_temperature": {
+        "name": "Temperature"
       }
     }
   },

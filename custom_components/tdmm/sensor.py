@@ -23,17 +23,20 @@ from homeassistant.const import (
 )
 from homeassistant.util import dt as dt_util
 
-from .entity import TdmmEntity, TdmmEntityDescription
+from .entity import TdmmEntity, TdmmEntityDescription, ams_device_info
+from .models import AmsUnit
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
+    from typing import Any
 
     from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.device_registry import DeviceInfo
     from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
     from homeassistant.helpers.typing import StateType
 
     from .coordinator import PrinterCoordinator, TdmmConfigEntry
-    from .models import PrinterStatus
+    from .models import PrinterStatus, Tray
 
 PARALLEL_UPDATES = 0
 
@@ -175,6 +178,33 @@ SENSOR_DESCRIPTIONS: tuple[TdmmSensorEntityDescription, ...] = (
 PRINTER_SENSORS = SENSOR_DESCRIPTIONS
 
 
+def _none(_d: PrinterStatus) -> None:
+    """Placeholder value_fn: AMS sensors resolve their own tray or unit."""
+    return None
+
+
+AMS_DESCRIPTIONS: tuple[TdmmSensorEntityDescription, ...] = (
+    TdmmSensorEntityDescription(key="tray_material", value_fn=_none),
+    TdmmSensorEntityDescription(key="tray_color", value_fn=_none),
+    TdmmSensorEntityDescription(
+        key="tray_remaining",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=_none,
+    ),
+    TdmmSensorEntityDescription(
+        key="ams_humidity",
+        device_class=SensorDeviceClass.HUMIDITY,
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=_none,
+    ),
+    TdmmSensorEntityDescription(key="ams_temperature", value_fn=_none, **_TEMP),
+)
+_AMS_BY_KEY = {d.key: d for d in AMS_DESCRIPTIONS}
+_TRAY_FIELDS = {"tray_material": "material", "tray_color": "color", "tray_remaining": "remain_pct"}
+
+
 async def async_setup_entry(
     hass: HomeAssistant, entry: TdmmConfigEntry, async_add_entities: AddConfigEntryEntitiesCallback
 ) -> None:
@@ -184,6 +214,37 @@ async def async_setup_entry(
         for desc in SENSOR_DESCRIPTIONS
         if desc.exists_fn(coord.printer)
     )
+    for coord in entry.runtime_data.coordinators.values():
+        entry.async_on_unload(coord.async_add_listener(_ams_listener(coord, async_add_entities)))
+
+
+def _ams_listener(coord: PrinterCoordinator, async_add_entities: AddConfigEntryEntitiesCallback) -> Callable[[], None]:
+    known_keys: set[str] = set()
+
+    def _add_new() -> None:
+        data = coord.data
+        if data is None:
+            return
+        new: list[TdmmSensor] = []
+        unit_ids = {u.id for u in data.ams_units} | {t.ams_unit for t in data.trays if t.ams_unit is not None}
+        for unit_id in sorted(unit_ids):
+            for key in ("ams_humidity", "ams_temperature"):
+                if f"ams{unit_id}_{key[4:]}" not in known_keys:
+                    known_keys.add(f"ams{unit_id}_{key[4:]}")
+                    new.append(TdmmAmsUnitSensor(coord, _AMS_BY_KEY[key], unit_id))
+        for tray in data.trays:
+            if tray.ams_unit is None or tray.tray is None:
+                continue
+            for key in _TRAY_FIELDS:
+                k = f"ams{tray.ams_unit}_tray{tray.tray}_{key.removeprefix('tray_')}"
+                if k not in known_keys:
+                    known_keys.add(k)
+                    new.append(TdmmAmsTraySensor(coord, _AMS_BY_KEY[key], tray.ams_unit, tray.tray))
+        if new:
+            async_add_entities(new)
+
+    _add_new()
+    return _add_new
 
 
 class TdmmSensor(TdmmEntity, SensorEntity):
@@ -219,3 +280,76 @@ class TdmmEndTimeSensor(TdmmSensor):
             eta = (dt_util.utcnow() + timedelta(minutes=remaining)).replace(second=0, microsecond=0)
             self._cache = (remaining, eta)
         return self._cache[1]
+
+
+def _ams_device(coord: PrinterCoordinator, unit_id: int) -> DeviceInfo:
+    data = coord.data
+    unit = next((u for u in data.ams_units if u.id == unit_id), None) if data else None
+    return ams_device_info(coord.printer, unit or AmsUnit(id=unit_id))
+
+
+class TdmmAmsTraySensor(TdmmSensor):
+    """One property of one AMS tray."""
+
+    def __init__(
+        self, coordinator: PrinterCoordinator, description: TdmmSensorEntityDescription, unit_id: int, tray_id: int
+    ) -> None:
+        super().__init__(coordinator, description)
+        self._unit_id = unit_id
+        self._tray_id = tray_id
+        self._field = _TRAY_FIELDS[description.key]
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}_{coordinator.printer.id}"
+            f"_ams{unit_id}_tray{tray_id}_{description.key.removeprefix('tray_')}"
+        )
+        self._attr_translation_placeholders = {"slot": str(tray_id + 1)}
+
+    def _tray(self) -> Tray | None:
+        data = self.coordinator.data
+        if data is None:
+            return None
+        return next((t for t in data.trays if t.ams_unit == self._unit_id and t.tray == self._tray_id), None)
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._tray() is not None
+
+    @property
+    def native_value(self) -> StateType:
+        tray = self._tray()
+        return None if tray is None else getattr(tray, self._field)
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return _ams_device(self.coordinator, self._unit_id)
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any]:
+        return {"ams_unit": self._unit_id, "slot": self._tray_id + 1}
+
+
+class TdmmAmsUnitSensor(TdmmSensor):
+    """Humidity or temperature of one AMS unit."""
+
+    def __init__(self, coordinator: PrinterCoordinator, description: TdmmSensorEntityDescription, unit_id: int) -> None:
+        super().__init__(coordinator, description)
+        self._unit_id = unit_id
+        self._attr_unique_id = (
+            f"{coordinator.config_entry.entry_id}_{coordinator.printer.id}_ams{unit_id}_{description.key[4:]}"
+        )
+
+    @property
+    def native_value(self) -> StateType:
+        data = self.coordinator.data
+        unit = next((u for u in data.ams_units if u.id == self._unit_id), None) if data else None
+        if unit is None:
+            return None
+        return unit.humidity if self.entity_description.key == "ams_humidity" else unit.temp
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        return _ams_device(self.coordinator, self._unit_id)
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any]:
+        return {"ams_unit": self._unit_id}
