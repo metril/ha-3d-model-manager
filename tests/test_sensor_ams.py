@@ -144,6 +144,10 @@ async def test_tray_color_and_remaining(hass: HomeAssistant, fake_tdmm: FakeTdmm
     await _state(hass, "sensor.a1_main_tray_2_color", "#00FF00")
     await _state(hass, "sensor.a1_main_tray_2_remaining", "20")
     assert hass.states.get("sensor.a1_main_tray_2_remaining").attributes["unit_of_measurement"] == "%"
+    trays = _trays()
+    trays[1]["remain_pct"] = -1
+    await _push(hass, fake_tdmm, {"trays": trays})
+    await _state(hass, "sensor.a1_main_tray_2_remaining", "unknown")
 
 
 async def test_ams_tray_attributes_identify_slot(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:

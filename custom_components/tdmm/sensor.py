@@ -229,8 +229,8 @@ def _ams_listener(coord: PrinterCoordinator, async_add_entities: AddConfigEntryE
         unit_ids = {u.id for u in data.ams_units} | {t.ams_unit for t in data.trays if t.ams_unit is not None}
         for unit_id in sorted(unit_ids):
             for key in ("ams_humidity", "ams_temperature"):
-                if f"ams{unit_id}_{key[4:]}" not in known_keys:
-                    known_keys.add(f"ams{unit_id}_{key[4:]}")
+                if f"ams{unit_id}_{key.removeprefix('ams_')}" not in known_keys:
+                    known_keys.add(f"ams{unit_id}_{key.removeprefix('ams_')}")
                     new.append(TdmmAmsUnitSensor(coord, _AMS_BY_KEY[key], unit_id))
         for tray in data.trays:
             if tray.ams_unit is None or tray.tray is None:
@@ -285,6 +285,7 @@ class TdmmEndTimeSensor(TdmmSensor):
 def _ams_device(coord: PrinterCoordinator, unit_id: int) -> DeviceInfo:
     data = coord.data
     unit = next((u for u in data.ams_units if u.id == unit_id), None) if data else None
+    # A unit first seen via trays gets fallback device info that is not updated later.
     return ams_device_info(coord.printer, unit or AmsUnit(id=unit_id))
 
 
@@ -317,7 +318,12 @@ class TdmmAmsTraySensor(TdmmSensor):
     @property
     def native_value(self) -> StateType:
         tray = self._tray()
-        return None if tray is None else getattr(tray, self._field)
+        if tray is None:
+            return None
+        value = getattr(tray, self._field)
+        if self._field == "remain_pct" and (value is None or value < 0):
+            return None  # 3DMM/Bambu report -1 for unknown
+        return value
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -334,9 +340,8 @@ class TdmmAmsUnitSensor(TdmmSensor):
     def __init__(self, coordinator: PrinterCoordinator, description: TdmmSensorEntityDescription, unit_id: int) -> None:
         super().__init__(coordinator, description)
         self._unit_id = unit_id
-        self._attr_unique_id = (
-            f"{coordinator.config_entry.entry_id}_{coordinator.printer.id}_ams{unit_id}_{description.key[4:]}"
-        )
+        suffix = description.key.removeprefix("ams_")
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_{coordinator.printer.id}_ams{unit_id}_{suffix}"
 
     @property
     def native_value(self) -> StateType:
