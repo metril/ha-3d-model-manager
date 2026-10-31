@@ -55,11 +55,12 @@ describe("tdmm-block-list", () => {
     const store: Record<string, string> = {};
     const dataTransfer = { setData: (k: string, v: string) => { store[k] = v; }, getData: (k: string) => store[k] ?? "", effectAllowed: "" };
     const ev = (t: string) => { const e = new Event(t, { bubbles: true, cancelable: true }); Object.defineProperty(e, "dataTransfer", { value: dataTransfer }); return e; };
-    rows[0]!.dispatchEvent(ev("dragstart"));
+    rows[0]!.querySelector(".handle")!.dispatchEvent(ev("dragstart"));
     rows[2]!.dispatchEvent(ev("dragover"));
     rows[2]!.dispatchEvent(ev("drop"));
     expect(types(got[0]!)).toEqual(["progress", "job", "header"]);
   });
+  // MUST stay last in this file: it defines ha-sortable globally, which switches every later render to the sortable path.
   it("uses ha-sortable when defined", async () => {
     customElements.define("ha-sortable", class extends HTMLElement {});
     const { el, got } = await mount(L);

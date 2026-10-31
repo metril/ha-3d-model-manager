@@ -12,7 +12,7 @@ export class TdmmProgressCard extends TdmmBaseCard {
   }
 
   static getStubConfig(hass: HomeAssistant): TdmmCardConfig {
-    const hit = Object.values(hass.entities).find(
+    const hit = Object.values(hass?.entities ?? {}).find(
       (e) => e.platform === "tdmm" && e.translation_key === "online" && e.entity_id.startsWith("binary_sensor.") && e.device_id,
     );
     return { type: CARD_TYPES.progress, device_id: hit?.device_id ?? "" };

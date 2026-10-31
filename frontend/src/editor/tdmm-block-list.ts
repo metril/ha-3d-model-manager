@@ -10,7 +10,6 @@ export class TdmmBlockList extends LitElement {
   static properties = { blocks: { attribute: false }, hass: { attribute: false } };
   declare blocks: BlockEntry[];
   declare hass?: HomeAssistant;
-  private dragFrom = -1;
 
   constructor() {
     super();
@@ -35,15 +34,14 @@ export class TdmmBlockList extends LitElement {
   private move(from: number, to: number): void { this.emit(moveBlock(this.blocks, from, to)); }
 
   private onDragStart(i: number, e: DragEvent): void {
-    this.dragFrom = i;
     e.dataTransfer?.setData("text/plain", String(i));
     if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
   }
   private onDrop(i: number, e: DragEvent): void {
     e.preventDefault();
     const raw = e.dataTransfer?.getData("text/plain");
-    const from = raw !== undefined && raw !== "" ? Number(raw) : this.dragFrom;
-    this.dragFrom = -1;
+    if (raw === undefined || raw === "") return;
+    const from = Number(raw);
     if (Number.isInteger(from) && from !== i) this.move(from, i);
   }
 
@@ -51,11 +49,10 @@ export class TdmmBlockList extends LitElement {
     const def = getBlock(b.type);
     const last = this.blocks.length - 1;
     return html`<div class="row ${b.hidden ? "hidden-block" : ""}"
-      draggable=${native ? "true" : "false"}
-      @dragstart=${native ? (e: DragEvent) => this.onDragStart(i, e) : null}
       @dragover=${native ? (e: DragEvent) => e.preventDefault() : null}
       @drop=${native ? (e: DragEvent) => this.onDrop(i, e) : null}>
-      <span class="handle"><ha-icon .icon=${"mdi:drag"}></ha-icon></span>
+      <span class="handle" draggable=${native ? "true" : "false"}
+        @dragstart=${native ? (e: DragEvent) => this.onDragStart(i, e) : null}><ha-icon .icon=${"mdi:drag"}></ha-icon></span>
       <ha-icon .icon=${ICON_SETS.default[def.icon]}></ha-icon>
       <span class="label">${def.label}</span>
       <ha-icon-button class="up" label="Move up" ?disabled=${i === 0} @click=${() => this.move(i, i - 1)}>
