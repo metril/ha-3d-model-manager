@@ -1,6 +1,36 @@
 # 3D Model Manager for Home Assistant
 
-Custom integration for 3D Model Manager (tdmm). Work in progress.
+Custom integration for 3D Model Manager (3DMM): monitor and control your printers from Home Assistant, with Lovelace cards included.
+
+## Installation (HACS)
+
+1. In HACS, add this repository as a custom repository (category: Integration).
+2. Install "3D Model Manager"; HACS installs the release zip (`tdmm.zip`, card bundle included).
+3. Restart Home Assistant, then add the integration under Settings, Devices & services.
+
+## Requirements
+
+- A 3DMM server on the `feat/ext-v2-ha-additions` branch, which provides the `/api/ext/v2` API.
+- A 3DMM API key with the `read` scope (required). Add the `control` scope to enable the light, fan, number, select and button entities; without it those commands fail with a clear error and a repair issue is raised.
+
+## Entities
+
+Created per printer:
+
+- Sensor: print state, progress, remaining time, end time, current layer, total layers, nozzle temperature and target, bed temperature and target, chamber temperature, stage, speed profile, Wi-Fi signal, current model, print error, active filament material and color, firmware version, nozzle type and diameter, external spool material and color.
+- Sensor (per AMS tray/unit): tray material, tray color, tray remaining, AMS humidity, AMS temperature.
+- Binary sensor: online, door open, printing, HMS active.
+- Light: chamber light.
+- Fan: part fan, aux fan, chamber fan.
+- Number: nozzle target temperature, bed target temperature.
+- Select: speed profile.
+- Button: pause, resume, stop, home, clear HMS.
+- Camera: proxied printer camera.
+- Image: print thumbnail.
+
+## Request budget
+
+Steady state is one `/ping` and one `/printers` request per setup and one `/api/events` SSE stream, with zero `/status` polling. Entities read coordinator data and never make requests; camera and image fetch on demand only.
 
 ## Cards
 
