@@ -150,8 +150,10 @@ class TdmmConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 _, ping = await async_validate(self.hass, {**entry.data, CONF_API_KEY: user_input[CONF_API_KEY]})
-            except (vol.Invalid, TdmmAuthError, TdmmScopeError):
+            except (vol.Invalid, TdmmAuthError):
                 errors["base"] = "invalid_auth"
+            except TdmmScopeError:
+                errors["base"] = "missing_read_scope"
             except TdmmError:
                 errors["base"] = "cannot_connect"
             else:

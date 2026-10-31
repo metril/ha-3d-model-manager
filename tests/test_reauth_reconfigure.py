@@ -49,9 +49,8 @@ async def test_reauth_success_updates_key_and_reloads(hass: HomeAssistant, fake_
     assert entry.data[CONF_API_KEY] == "new"
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.LOADED
-    assert fake_tdmm.request_log[-1].headers.get("X-API-Key") == "new" or any(
-        r.headers.get("X-API-Key") == "new" for r in fake_tdmm.request_log
-    )
+    assert entry.options == {CONF_PRINTER_IDS: [1]}
+    assert any(r.headers.get("X-API-Key") == "new" for r in fake_tdmm.request_log)
 
 
 async def test_reauth_wrong_key_id_aborts(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
@@ -118,3 +117,13 @@ async def test_reconfigure_to_existing_server_aborts_already_configured(
     assert result["type"] is FlowResultType.ABORT
     assert result["reason"] == "already_configured"
     assert entry.data[CONF_URL] == fake_tdmm.url
+
+
+async def test_reauth_missing_read_scope_error(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
+    entry = _entry(fake_tdmm)
+    entry.add_to_hass(hass)
+    result = await entry.start_reauth_flow(hass)
+    fake_tdmm.overrides["ping"] = (403, {})
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_API_KEY: "new"})
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "missing_read_scope"}

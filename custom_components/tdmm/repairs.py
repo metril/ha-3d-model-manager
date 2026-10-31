@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from homeassistant.core import callback
 from homeassistant.helpers import issue_registry as ir
 
 from .const import DOMAIN
@@ -20,11 +21,13 @@ def _invalid_key_id(entry: TdmmConfigEntry) -> str:
     return f"{entry.entry_id}_invalid_api_key"
 
 
+@callback
 def async_clear_issues(hass: HomeAssistant, entry: TdmmConfigEntry) -> None:
     """Clear connection-related issues. Scope issues are re-evaluated at setup."""
     ir.async_delete_issue(hass, DOMAIN, _invalid_key_id(entry))
 
 
+@callback
 def async_raise_invalid_key(hass: HomeAssistant, entry: TdmmConfigEntry) -> None:
     """Raise the invalid-key issue."""
     ir.async_create_issue(
@@ -38,6 +41,7 @@ def async_raise_invalid_key(hass: HomeAssistant, entry: TdmmConfigEntry) -> None
     )
 
 
+@callback
 def async_set_missing_scopes(hass: HomeAssistant, entry: TdmmConfigEntry, missing: set[str]) -> None:
     """Raise an issue per missing scope and clear the ones that are present."""
     for scope in SCOPES:
@@ -54,3 +58,11 @@ def async_set_missing_scopes(hass: HomeAssistant, entry: TdmmConfigEntry, missin
             )
         else:
             ir.async_delete_issue(hass, DOMAIN, issue_id)
+
+
+@callback
+def async_delete_all_issues(hass: HomeAssistant, entry: TdmmConfigEntry) -> None:
+    """Delete every issue belonging to the entry."""
+    async_clear_issues(hass, entry)
+    for scope in SCOPES:
+        ir.async_delete_issue(hass, DOMAIN, f"{entry.entry_id}_missing_scope_{scope}")

@@ -32,6 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> bool
     api = TdmmApiClient(session, entry.data[CONF_URL], entry.data[CONF_API_KEY])
     try:
         ping = await api.ping()
+        repairs.async_clear_issues(hass, entry)
         repairs.async_set_missing_scopes(hass, entry, {"read", "control"} - set(ping.scopes))
         if "read" not in ping.scopes:
             raise ConfigEntryError(translation_domain=DOMAIN, translation_key="missing_read_scope")
@@ -66,3 +67,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> boo
     if hub.stream is not None:
         await hub.stream.stop()
     return await hass.config_entries.async_unload_platforms(entry, _platforms(hub))
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> None:
+    """Remove the entry's repair issues."""
+    repairs.async_delete_all_issues(hass, entry)
