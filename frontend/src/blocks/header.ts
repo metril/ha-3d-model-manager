@@ -1,10 +1,10 @@
 import { css, html, nothing } from "lit";
 import { registerBlock } from "./registry.ts";
-import { fmtText } from "./format.ts";
+import { fmtText, present } from "./format.ts";
 
 registerBlock({
   type: "header", label: "Header", icon: "printer", size: 1,
-  uses: (r) => [r.byKey.current_model, r.byKey.print_state].filter((x): x is string => !!x),
+  uses: (r) => present(r.byKey.current_model, r.byKey.print_state),
   render: (ctx) => {
     const model = ctx.state("current_model");
     const st = ctx.state("print_state");

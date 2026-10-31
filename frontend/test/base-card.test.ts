@@ -106,15 +106,17 @@ class RealCard extends TdmmBaseCard {
   protected visibleBlocks() { return this.config?.blocks ?? []; }
   get ids() { return this.usedIds; }
   recompute() { this.refresh(); }
+  addBogus() { this.config!.blocks.push({ type: "bogus" as never }); }
 }
 customElements.define("tdmm-real-card", RealCard);
 
 describe("registry-based used ids", () => {
-  const cfg = { type: "custom:tdmm-printer-card", device_id: "dev_p1", blocks: [{ type: "light" as const }, { type: "camera" as const }] };
+  const cfg = { type: "custom:tdmm-printer-card", device_id: "dev_p1", blocks: [{ type: "light" as const }] };
+  const withBogus = (el: RealCard) => { el.setConfig(cfg); el.addBogus(); };
   it("computeUsedIds unions block uses, drops falsy ids, after hass set", () => {
     registerBlock({ type: "light", label: "L", icon: "light", size: 1, uses: (r) => [r.byKey.progress!, undefined as unknown as string, ""], render: () => nothing });
     const el = new RealCard();
-    el.setConfig(cfg);
+    withBogus(el);
     el.hass = makeHass();
     expect(el.ids).toEqual([PROG]);
     el.recompute();
@@ -123,7 +125,7 @@ describe("registry-based used ids", () => {
   it("renderBlocks warns and skips unregistered block types", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const el = new RealCard();
-    el.setConfig(cfg);
+    withBogus(el);
     el.hass = makeHass();
     document.body.append(el);
     await el.updateComplete;

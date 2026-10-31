@@ -13,7 +13,7 @@ const numeric = (s?: HassEntity): number | undefined => {
 };
 
 export function fmtDuration(value: number, unit?: string): string {
-  const minutes = Math.floor(unit === "s" ? value / 60 : unit === "h" ? value * 60 : value);
+  const minutes = Math.max(0, Math.floor(unit === "s" ? value / 60 : unit === "h" ? value * 60 : value));
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
@@ -21,7 +21,7 @@ export function fmtDuration(value: number, unit?: string): string {
 
 export function fmtTemp(s?: HassEntity): string {
   const n = numeric(s);
-  return n === undefined ? DASH : `${Math.round(n)} °C`;
+  return n === undefined ? DASH : `${Math.round(n)} ${(s?.attributes.unit_of_measurement as string | undefined) || "°C"}`;
 }
 
 export function fmtPercent(s?: HassEntity): string {

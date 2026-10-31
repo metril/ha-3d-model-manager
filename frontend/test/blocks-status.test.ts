@@ -1,6 +1,5 @@
 import { nothing, render, type TemplateResult } from "lit";
 import { describe, expect, it } from "vitest";
-import "../src/blocks/index.ts";
 import { getBlock, blockStyles } from "../src/blocks/registry.ts";
 import type { BlockContext } from "../src/blocks/types.ts";
 import type { BlockType } from "../src/config.ts";

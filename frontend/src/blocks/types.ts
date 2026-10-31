@@ -5,7 +5,7 @@ import type { NormalizedConfig } from "../config.ts";
 import type { ICON_SETS } from "../theme/tokens.ts";
 
 export type { BlockType } from "../config.ts";
-import type { BlockType } from "../config.ts";
+import type { BlockType, TabId } from "../config.ts";
 
 export type IconName = keyof (typeof ICON_SETS)["default"];
 
@@ -16,7 +16,7 @@ export interface BlockContext {
   icon(name: IconName): string;
   state(key: EntityKey): HassEntity | undefined;
   call(domain: string, service: string, data: Record<string, unknown>): Promise<unknown>;
-  tab?: string;
+  tab?: TabId;
 }
 
 export interface BlockDef {
