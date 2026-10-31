@@ -20,3 +20,6 @@ Steady state: one `/ping` and one `/printers` per setup, one `/api/events` SSE s
 - Tests run with `-n auto`; each test uses its own `aiohttp_server`, tmp dirs and ports.
 - No test may touch global state; no shared files between tests.
 - CI shards with pytest-split (`--splits 4 --group N`); aggregator job `tests` is the required check.
+
+## Releasing
+Bump `version` in `custom_components/tdmm/manifest.json` (single source of truth), open a PR, merge to `main`. On push to `main`, `release.yml` tags `v<version>` if absent, builds the cards, checks the committed bundle is fresh (`git diff --exit-code`), zips `custom_components/tdmm/` to `tdmm.zip` and publishes a GitHub release; HACS installs the zip. CI job `version` fails PRs that change `custom_components/` or `frontend/` without a new version. Never force-move tags.

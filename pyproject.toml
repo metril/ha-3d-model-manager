@@ -14,6 +14,7 @@ dev = [
     "pytest-split",
     "aioresponses",
     "pytest-aiohttp",
+    "pyyaml",
 ]
 
 [tool.pytest.ini_options]
