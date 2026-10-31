@@ -15,6 +15,6 @@ export const buildOptions = {
   outfile: resolve(here, "../custom_components/tdmm/frontend/tdmm-cards.js"),
 };
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(here, "esbuild.config.mjs")) {
+if (import.meta.main) {
   await build(buildOptions);
 }
