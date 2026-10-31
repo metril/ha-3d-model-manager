@@ -1,0 +1,17 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - id: version
+        run: echo "version=$(jq -r .version custom_components/tdmm/manifest.json)" >> "$GITHUB_OUTPUT"
+      # Placeholder: Task 19 adds zip packaging (tdmm.zip), card bundle and the GitHub release.
+      - run: echo "Would release v${{ steps.version.outputs.version }}"
