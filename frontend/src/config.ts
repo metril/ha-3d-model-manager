@@ -73,7 +73,7 @@ function normalizeList(raw: unknown, defaults: BlockEntry[], where: string): Blo
   const out: BlockEntry[] = [];
   const seen = new Set<string>();
   if (raw !== undefined && !Array.isArray(raw)) console.warn(`tdmm: ${where} must be a list; using defaults`);
-  const list = Array.isArray(raw) ? raw : raw === undefined ? defaults : [];
+  const list = Array.isArray(raw) ? raw : defaults;
   for (const item of list) {
     const type = isObj(item) ? item.type : undefined;
     if (typeof type !== "string" || !BLOCK_TYPES.includes(type)) {
@@ -94,7 +94,8 @@ export function normalizeConfig(raw: unknown): NormalizedConfig {
   const r = isObj(raw) ? raw : {};
   if (typeof r.device_id !== "string" || r.device_id === "") throw new Error("device_id is required");
   const type = typeof r.type === "string" ? r.type : CARD_TYPES.printer;
-  const kind = kindFromType(type);
+  let kind: CardKind = "printer";
+  try { kind = kindFromType(type); } catch { console.warn(`tdmm: unknown card type "${type}"; treating as printer`); }
 
   const rawTabs = isObj(r.tabs) ? r.tabs : {};
   for (const k of Object.keys(rawTabs)) {

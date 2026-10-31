@@ -73,4 +73,21 @@ describe("config", () => {
     expect(() => normalizeConfig({ type: P, device_id: 3 })).toThrow("device_id is required");
     expect(() => normalizeConfig(null)).toThrow("device_id is required");
   });
+  it("non-array block list falls back to defaults", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const n = normalizeConfig({ type: CARD_TYPES.progress, device_id: "d", blocks: "header" });
+    expect(n.blocks).toEqual(CARD_DEFAULTS.blocks.progress);
+    expect(warn).toHaveBeenCalled();
+  });
+  it("unknown type falls back to printer kind without throwing", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const n = normalizeConfig({ type: "custom:other", device_id: "d" });
+    expect(n.kind).toBe("printer");
+    expect(warn).toHaveBeenCalled();
+  });
+  it("serialize(normalize()) is idempotent", () => {
+    const c = { type: P, device_id: "d", tabs: { status: [{ type: "hms", hidden: true }, { type: "zzz" }] } };
+    const once = serializeConfig(normalizeConfig(c));
+    expect(serializeConfig(normalizeConfig(once))).toEqual(once);
+  });
 });
