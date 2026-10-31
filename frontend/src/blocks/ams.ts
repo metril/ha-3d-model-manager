@@ -4,7 +4,7 @@ import { fmtPercent, fmtTemp, isAvailable, present } from "./format.ts";
 import { colorStyle, isBlank, isEmptyColor, parseColor } from "./filament.ts";
 
 registerBlock({
-  type: "ams", label: "AMS", icon: "spool", size: 1,
+  type: "ams", label: "AMS", icon: "spool", size: (r) => 1 + r.ams.length,
   uses: (r) => present(...r.ams.flatMap((u) => [u.humidity, u.temperature, ...u.slots.flatMap((s) => [s.material, s.color, s.remaining])]),
     r.byKey.active_filament_material, r.byKey.active_filament_color),
   render: (ctx) => {

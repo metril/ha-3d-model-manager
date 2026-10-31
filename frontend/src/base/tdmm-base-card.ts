@@ -77,7 +77,7 @@ export abstract class TdmmBaseCard extends LitElement {
     let n = 0;
     for (const b of this.config ? this.visibleBlocks() : []) {
       if (b.hidden) continue;
-      try { n += getBlock(b.type).size; } catch { /* unregistered block */ }
+      try { const sz = getBlock(b.type).size; n += typeof sz === "function" ? sz(this.resolved) : sz; } catch { /* unregistered block */ }
     }
     return Math.max(1, n);
   }

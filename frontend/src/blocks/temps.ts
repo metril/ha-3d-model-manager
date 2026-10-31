@@ -1,4 +1,5 @@
 import { css, html, nothing } from "lit";
+import { ifDefined } from "lit/directives/if-defined.js";
 import type { IconName } from "./types.ts";
 import type { EntityKey } from "../entities.ts";
 import { registerBlock } from "./registry.ts";
@@ -23,10 +24,16 @@ registerBlock({
       if (!id || !st) return nothing;
       if (editable && id.startsWith("number.")) {
         const onChange = (e: Event) => {
-          const v = Number((e.target as HTMLInputElement).value);
-          if (Number.isFinite(v)) void ctx.call("number", "set_value", { entity_id: id, value: v });
+          const raw = (e.target as HTMLInputElement).value.trim();
+          if (raw === "") return;
+          let v = Number(raw);
+          if (!Number.isFinite(v)) return;
+          const lo = Number(st.attributes.min), hi = Number(st.attributes.max);
+          if (st.attributes.min != null && Number.isFinite(lo)) v = Math.max(lo, v);
+          if (st.attributes.max != null && Number.isFinite(hi)) v = Math.min(hi, v);
+          void ctx.call("number", "set_value", { entity_id: id, value: v });
         };
-        return html` <span class="tdmm-temp-target">/ <input class="tdmm-temp-input" type="number" aria-label=${`${x.label} target`}
+        return html` <span class="tdmm-temp-target">/ <input class="tdmm-temp-input" type="number" min=${ifDefined(st.attributes.min as number | undefined)} max=${ifDefined(st.attributes.max as number | undefined)} step=${ifDefined(st.attributes.step as number | undefined)} aria-label=${`${x.label} target`}
           .value=${isAvailable(st) ? String(Math.round(Number(st.state))) : ""} ?disabled=${!isAvailable(st)} @change=${onChange} /></span>`;
       }
       return html` <span class="tdmm-temp-target">/ ${fmtTemp(st)}</span>`;

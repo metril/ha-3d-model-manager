@@ -23,7 +23,7 @@ export interface BlockDef {
   type: BlockType;
   label: string;
   icon: IconName;
-  size: number;
+  size: number | ((r: ResolvedEntities) => number);
   uses(r: ResolvedEntities): string[];
   render(ctx: BlockContext): TemplateResult | typeof nothing;
   styles?: CSSResult;

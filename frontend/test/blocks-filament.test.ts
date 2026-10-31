@@ -55,7 +55,10 @@ describe("ams", () => {
     expect(mount("ams", { amsUnits: 0 }).div.innerHTML).toBe("");
   });
   it("size is 1 + units", () => {
-    expect(getBlock("ams").size).toBe(1);
+    const size = getBlock("ams").size;
+    expect(typeof size).toBe("function");
+    expect((size as (r: unknown) => number)(mount("ams").resolved)).toBe(2);
+    expect((size as (r: unknown) => number)(mount("ams", { amsUnits: 2 }).resolved)).toBe(3);
   });
 });
 

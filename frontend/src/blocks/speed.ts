@@ -17,6 +17,7 @@ registerBlock({
     const onChange = (e: Event) => void ctx.call("select", "select_option", { entity_id: id, option: (e.target as HTMLSelectElement).value });
     return html`<div class="tdmm-speed">${icon}
       <select class="tdmm-select" ?disabled=${!isAvailable(st)} @change=${onChange}>
+        ${options.includes(st.state) ? nothing : html`<option value=${st.state} selected disabled>${st.state}</option>`}
         ${options.map((o) => html`<option value=${o} ?selected=${o === st.state}>${o}</option>`)}
       </select></div>`;
   },

@@ -109,6 +109,25 @@ describe("control blocks", () => {
     expect(hass.callService).toHaveBeenCalledWith("number", "set_value", { entity_id: "number.x1c_garage_nozzle_target_temperature_renamed", value: 230 });
     expect(mount("temps", { tab: "status" }).div.querySelector("input")).toBeNull();
   });
+  it("temps empty input makes no call; value above max is clamped", () => {
+    const id = "number.x1c_garage_nozzle_target_temperature_renamed";
+    const { div, hass } = mount("temps", { tab: "control", states: { [id]: { attributes: { min: 0, max: 300, step: 5 } } } });
+    const inp = div.querySelector<HTMLInputElement>("input[type=number]")!;
+    expect([inp.min, inp.max, inp.step]).toEqual(["0", "300", "5"]);
+    inp.value = "  ";
+    inp.dispatchEvent(new Event("change"));
+    inp.value = "";
+    inp.dispatchEvent(new Event("change"));
+    expect(hass.callService).toHaveBeenCalledTimes(0);
+    inp.value = "999";
+    inp.dispatchEvent(new Event("change"));
+    expect(hass.callService).toHaveBeenCalledWith("number", "set_value", { entity_id: id, value: 300 });
+  });
+  it("speed adds disabled placeholder when state not in options", () => {
+    const { div } = mount("speed", { states: { "select.x1c_garage_speed_profile_renamed": { state: "weird", attributes: { options: ["silent", "sport"] } } } });
+    const o = div.querySelector<HTMLOptionElement>("option[disabled]")!;
+    expect(o.value).toBe("weird");
+  });
   it("temps not editable when target is a sensor", () => {
     const { div } = mount("temps", { tab: "control", dropEntity: "number.x1c_garage_nozzle_target_temperature_renamed" });
     const inputs = div.querySelectorAll("input[type=number]");

@@ -3,6 +3,7 @@ import { registerBlock } from "./registry.ts";
 import { ensureHaElements } from "../editor/load-ha.ts";
 import { present } from "./format.ts";
 
+// Intentionally one-shot: never retries, so a failed/slow HA load is not hammered on every render.
 let requested = false;
 
 registerBlock({
