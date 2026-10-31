@@ -141,6 +141,70 @@ class TdmmConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={"control_warning": warning},
         )
 
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        entry = self._get_reauth_entry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                _, ping = await async_validate(self.hass, {**entry.data, CONF_API_KEY: user_input[CONF_API_KEY]})
+            except (vol.Invalid, TdmmAuthError, TdmmScopeError):
+                errors["base"] = "invalid_auth"
+            except TdmmError:
+                errors["base"] = "cannot_connect"
+            else:
+                if entry_unique_id(entry.data[CONF_URL], ping.key_id) != entry.unique_id:
+                    return self.async_abort(reason="wrong_key")
+                return self.async_update_reload_and_abort(entry, data_updates={CONF_API_KEY: user_input[CONF_API_KEY]})
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema({vol.Required(CONF_API_KEY): str}),
+            errors=errors,
+            description_placeholders={"name": entry.title},
+        )
+
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                _, ping = await async_validate(self.hass, user_input)
+                if "read" not in ping.scopes:
+                    errors["base"] = "missing_read_scope"
+            except vol.Invalid:
+                errors["base"] = "invalid_url"
+            except TdmmAuthError:
+                errors["base"] = "invalid_auth"
+            except TdmmScopeError:
+                errors["base"] = "missing_read_scope"
+            except TdmmError:
+                errors["base"] = "cannot_connect"
+            if not errors:
+                url = normalize_url(user_input[CONF_URL])
+                new_uid = entry_unique_id(url, ping.key_id)
+                if any(e.unique_id == new_uid and e.entry_id != entry.entry_id for e in self._async_current_entries()):
+                    return self.async_abort(reason="already_configured")
+                return self.async_update_reload_and_abort(
+                    entry,
+                    unique_id=new_uid,
+                    data_updates={
+                        CONF_URL: url,
+                        CONF_VERIFY_SSL: user_input[CONF_VERIFY_SSL],
+                        CONF_API_KEY: user_input[CONF_API_KEY],
+                    },
+                )
+        defaults = user_input or entry.data
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_URL, default=defaults[CONF_URL]): str,
+                vol.Required(CONF_API_KEY, default=defaults[CONF_API_KEY]): str,
+                vol.Required(CONF_VERIFY_SSL, default=defaults[CONF_VERIFY_SSL]): bool,
+            }
+        )
+        return self.async_show_form(step_id="reconfigure", data_schema=schema, errors=errors)
+
 
 class TdmmOptionsFlow(OptionsFlowWithReload):
     """Select which printers are exposed."""

@@ -32,12 +32,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> bool
     api = TdmmApiClient(session, entry.data[CONF_URL], entry.data[CONF_API_KEY])
     try:
         ping = await api.ping()
+        repairs.async_set_missing_scopes(hass, entry, {"read", "control"} - set(ping.scopes))
         if "read" not in ping.scopes:
-            await repairs.async_set_missing_scopes(hass, entry, {"read"})
             raise ConfigEntryError(translation_domain=DOMAIN, translation_key="missing_read_scope")
         printers = await api.printers()
     except TdmmAuthError as err:
-        await repairs.async_raise_invalid_key(hass, entry)
+        repairs.async_raise_invalid_key(hass, entry)
         raise ConfigEntryAuthFailed from err
     except TdmmError as err:
         raise ConfigEntryNotReady from err
@@ -48,10 +48,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> bool
     entry.runtime_data = TdmmRuntime(hub=hub, coordinators=coordinators)
 
     def _auth_failed() -> None:
+        repairs.async_raise_invalid_key(hass, entry)
         entry.async_start_reauth(hass)
 
     def _connected() -> None:
-        entry.async_create_background_task(hass, repairs.async_clear_issues(hass, entry), "tdmm_clear_issues")
+        repairs.async_clear_issues(hass, entry)
 
     hub.stream = EventStream(hass, entry, hub, coordinators, on_auth_failed=_auth_failed, on_connected=_connected)
     await hass.config_entries.async_forward_entry_setups(entry, _platforms(hub))

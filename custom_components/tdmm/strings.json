@@ -17,6 +17,21 @@
         "data": {
           "printer_ids": "Printers"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate",
+        "description": "The API key for {name} was rejected. Enter a new key for the same API key entry.",
+        "data": {
+          "api_key": "API key"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure 3D Model Manager",
+        "data": {
+          "url": "Server URL",
+          "api_key": "API key",
+          "verify_ssl": "Verify SSL certificate"
+        }
       }
     },
     "error": {
@@ -27,7 +42,10 @@
       "invalid_url": "Enter a valid http(s) URL."
     },
     "abort": {
-      "already_configured": "This server and API key are already configured."
+      "already_configured": "This server and API key are already configured.",
+      "wrong_key": "This API key is a different key than the one configured. Use the original key, or add a new entry.",
+      "reauth_successful": "Re-authentication was successful.",
+      "reconfigure_successful": "Reconfiguration was successful."
     }
   },
   "options": {
@@ -49,15 +67,39 @@
   },
   "entity": {
     "binary_sensor": {
-      "online": { "name": "Online" },
-      "door_open": { "name": "Door" },
-      "printing": { "name": "Printing" },
-      "hms_active": { "name": "HMS alert" }
+      "online": {
+        "name": "Online"
+      },
+      "door_open": {
+        "name": "Door"
+      },
+      "printing": {
+        "name": "Printing"
+      },
+      "hms_active": {
+        "name": "HMS alert"
+      }
     }
   },
   "exceptions": {
-    "missing_control_scope": { "message": "The API key does not have the control scope." },
-    "command_failed": { "message": "The command could not be sent to 3D Model Manager." },
-    "missing_read_scope": { "message": "The API key does not have the read scope." }
+    "missing_control_scope": {
+      "message": "The API key does not have the control scope."
+    },
+    "command_failed": {
+      "message": "The command could not be sent to 3D Model Manager."
+    },
+    "missing_read_scope": {
+      "message": "The API key does not have the read scope."
+    }
+  },
+  "issues": {
+    "invalid_api_key": {
+      "title": "3D Model Manager API key rejected",
+      "description": "The API key for {name} was rejected by the server. Re-authenticate the integration with a valid key."
+    },
+    "missing_scope": {
+      "title": "API key missing the {scope} scope",
+      "description": "The API key for this server does not have the {scope} scope. Some features are unavailable until you reconfigure the integration with a key that has it."
+    }
   }
 }
