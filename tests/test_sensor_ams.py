@@ -6,12 +6,11 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.tdmm.const import DOMAIN
 
-from .conftest import setup_integration, until
+from .conftest import get_device, setup_integration, until
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -76,9 +75,8 @@ async def test_ams_device_via_printer(hass: HomeAssistant, fake_tdmm: FakeTdmm) 
     fake_tdmm.statuses[1] = _raw()
     await setup_integration(hass, fake_tdmm)
     await _ready(hass)
-    dev_reg = dr.async_get(hass)
-    ams = dev_reg.async_get_device(identifiers={(DOMAIN, "SN1_ams0")})
-    printer = dev_reg.async_get_device(identifiers={(DOMAIN, "SN1")})
+    ams = get_device(hass, (DOMAIN, "SN1_ams0"))
+    printer = get_device(hass, (DOMAIN, "SN1"))
     assert ams is not None
     assert printer is not None
     assert ams.via_device_id == printer.id
@@ -91,9 +89,8 @@ async def test_ams_identifier_without_serial_uses_printer_id(hass: HomeAssistant
     fake_tdmm.statuses[1] = _raw(with_unit=False)
     await setup_integration(hass, fake_tdmm)
     await _ready(hass)
-    dev_reg = dr.async_get(hass)
-    assert dev_reg.async_get_device(identifiers={(DOMAIN, "1_ams0")}) is not None
-    assert dev_reg.async_get_device(identifiers={(DOMAIN, "None_ams0")}) is None
+    assert get_device(hass, (DOMAIN, "1_ams0")) is not None
+    assert get_device(hass, (DOMAIN, "None_ams0")) is None
 
 
 async def test_new_ams_unit_added_via_delta(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:

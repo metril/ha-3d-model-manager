@@ -8,12 +8,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.tdmm.const import DOMAIN
 
-from .conftest import setup_integration, until
+from .conftest import get_device, setup_integration, until
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -31,7 +30,7 @@ async def test_setup_creates_device_and_entities(hass: HomeAssistant, fake_tdmm:
     fake_tdmm.statuses[1] = _raw()
     entry = await setup_integration(hass, fake_tdmm)
     assert entry.state is ConfigEntryState.LOADED
-    dev = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "SN1")})
+    dev = get_device(hass, (DOMAIN, "SN1"))
     assert dev is not None
     assert dev.name == "A1"
     assert dev.configuration_url == fake_tdmm.url
@@ -100,4 +99,4 @@ async def test_unselected_printer_not_created(hass: HomeAssistant, fake_tdmm: Fa
     entry = await setup_integration(hass, fake_tdmm, printer_ids=(1,))
     assert set(entry.runtime_data.coordinators) == {1}
     assert hass.states.get("binary_sensor.x1_online") is None
-    assert dr.async_get(hass).async_get_device(identifiers={(DOMAIN, "SN2")}) is None
+    assert get_device(hass, (DOMAIN, "SN2")) is None

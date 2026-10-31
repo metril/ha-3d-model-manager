@@ -12,7 +12,6 @@ dev = [
     "pytest-homeassistant-custom-component>=0.13.316",
     "pytest-xdist",
     "pytest-split",
-    "aioresponses",
     "pytest-aiohttp",
     "pyyaml",
     "pyturbojpeg>=2.6.1",
@@ -36,5 +35,5 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["voluptuous.*", "aioresponses.*"]
+module = ["voluptuous.*"]
 ignore_missing_imports = true

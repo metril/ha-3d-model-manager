@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from homeassistant.config_entries import ConfigEntryState
+from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.tdmm.const import CONF_API_KEY, CONF_PRINTER_IDS, CONF_URL, CONF_VERIFY_SSL, DOMAIN
@@ -18,6 +19,17 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable
 
     from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.device_registry import DeviceEntry
+
+
+def get_device(hass: HomeAssistant, identifier: tuple[str, str]) -> DeviceEntry | None:
+    """Version-safe device lookup (async_get_device(identifiers=) is removed in newer HA)."""
+    dev_reg = dr.async_get(hass)
+    for entry in hass.config_entries.async_entries(identifier[0]):
+        for dev in dr.async_entries_for_config_entry(dev_reg, entry.entry_id):
+            if identifier in dev.identifiers:
+                return dev
+    return None
 
 
 @pytest.fixture(autouse=True)
