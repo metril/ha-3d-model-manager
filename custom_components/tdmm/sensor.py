@@ -138,6 +138,7 @@ SENSOR_DESCRIPTIONS: tuple[TdmmSensorEntityDescription, ...] = (
     ),
     TdmmSensorEntityDescription(
         key="wifi_signal",
+        entity_registry_enabled_default=False,
         device_class=SensorDeviceClass.SIGNAL_STRENGTH,
         native_unit_of_measurement=SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -146,16 +147,24 @@ SENSOR_DESCRIPTIONS: tuple[TdmmSensorEntityDescription, ...] = (
     ),
     TdmmSensorEntityDescription(key="current_model", value_fn=_model),
     TdmmSensorEntityDescription(
-        key="print_error", entity_category=EntityCategory.DIAGNOSTIC, value_fn=lambda d: d.print_error
+        key="print_error",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.print_error or None,
     ),
     TdmmSensorEntityDescription(key="active_filament_material", value_fn=_active("material")),
     TdmmSensorEntityDescription(key="active_filament_color", value_fn=_active("color")),
     TdmmSensorEntityDescription(
-        key="firmware_version", entity_category=EntityCategory.DIAGNOSTIC, value_fn=lambda d: d.firmware_ota
+        key="firmware_version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: d.firmware_ota,
     ),
-    TdmmSensorEntityDescription(key="nozzle_type", value_fn=lambda d: d.nozzle_type),
+    TdmmSensorEntityDescription(
+        key="nozzle_type", entity_category=EntityCategory.DIAGNOSTIC, value_fn=lambda d: d.nozzle_type
+    ),
     TdmmSensorEntityDescription(
         key="nozzle_diameter",
+        entity_category=EntityCategory.DIAGNOSTIC,
         device_class=SensorDeviceClass.DISTANCE,
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
         value_fn=lambda d: d.nozzle_mm,
@@ -198,7 +207,12 @@ class TdmmEndTimeSensor(TdmmSensor):
     def native_value(self) -> datetime | None:
         data = self.coordinator.data
         remaining = None if data is None else data.mc_remaining_time
-        if data is None or remaining is None or data.gcode_state not in _ACTIVE_STATES:
+        if (
+            data is None
+            or not data.online
+            or remaining is None
+            or (data.gcode_state or "").upper() not in _ACTIVE_STATES
+        ):
             self._cache = None
             return None
         if self._cache is None or self._cache[0] != remaining:

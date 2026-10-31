@@ -10,8 +10,9 @@ from unittest.mock import patch
 
 import pytest
 from homeassistant.const import EVENT_STATE_CHANGED
+from homeassistant.helpers import entity_registry as er
 
-from .conftest import setup_integration, until
+from .conftest import setup_entry, setup_integration, until
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -19,6 +20,19 @@ if TYPE_CHECKING:
     from .fake_tdmm import FakeTdmm
 
 FIX = Path(__file__).parent / "fixtures"
+
+
+async def _setup(hass: HomeAssistant, fake: FakeTdmm, *, printer_ids=(1,), enable=()) -> None:
+    """Set up the integration with disabled-by-default sensors pre-enabled in the registry."""
+    entry = await setup_entry(hass, fake, printer_ids=printer_ids)
+    reg = er.async_get(hass)
+    for pid in printer_ids:
+        for key in enable:
+            reg.async_get_or_create(
+                "sensor", "tdmm", f"{entry.entry_id}_{pid}_{key}", config_entry=entry, suggested_object_id=f"a1_{key}"
+            )
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
 
 
 def _raw() -> dict:
@@ -51,7 +65,7 @@ async def _push(hass: HomeAssistant, fake: FakeTdmm, patch: dict) -> None:
         ("speed_profile", "standard"),
         ("wifi_signal", "-52"),
         ("current_model", "Benchy"),
-        ("print_error", "0"),
+        ("print_error", "unknown"),
         ("active_filament_material", "PLA"),
         ("active_filament_color", "#FF0000"),
         ("firmware_version", "01.08.02.00"),
@@ -64,13 +78,13 @@ async def _push(hass: HomeAssistant, fake: FakeTdmm, patch: dict) -> None:
 async def test_sensor_values_from_fixture(hass: HomeAssistant, fake_tdmm: FakeTdmm, key: str, expected: str) -> None:
     fake_tdmm.printers = [{"id": 1, "name": "A1", "serial": "SN1", "capabilities": {"chamber_temp": True}}]
     fake_tdmm.statuses[1] = _raw()
-    await setup_integration(hass, fake_tdmm)
+    await _setup(hass, fake_tdmm, enable=("wifi_signal", "firmware_version"))
     await _state(hass, f"sensor.a1_{key}", expected)
 
 
 async def test_offline_printer_sensors_unavailable(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
     fake_tdmm.statuses[1] = {**_raw(), "online": False}
-    await setup_integration(hass, fake_tdmm)
+    await _setup(hass, fake_tdmm, enable=("firmware_version",))
     for key in ("print_state", "progress", "nozzle_temperature", "end_time", "firmware_version"):
         await _state(hass, f"sensor.a1_{key}", "unavailable")
 
@@ -86,18 +100,21 @@ async def test_end_time_rounded_to_minute(hass: HomeAssistant, fake_tdmm: FakeTd
 
 async def test_end_time_stable_when_remaining_unchanged(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
     # The wall clock is mocked (not frozen) so the event loop's timers keep running.
-    now = datetime(2026, 10, 30, 12, 0, 20, tzinfo=UTC)
+    now = datetime(2026, 10, 30, 12, 0, 50, tzinfo=UTC)
     with patch("custom_components.tdmm.sensor.dt_util.utcnow", side_effect=lambda: now):
         fake_tdmm.statuses[1] = _raw()
-        await setup_integration(hass, fake_tdmm)
-        expected = "2026-10-30T13:35:00+00:00"
+        entry = await setup_integration(hass, fake_tdmm)
+        coord = entry.runtime_data.coordinators[1]
+        expected = "2026-10-30T13:35:00+00:00"  # 12:00:50 + 95 min, floored to the minute
         await _state(hass, "sensor.a1_end_time", expected)
-        now += timedelta(seconds=30)
+        now += timedelta(seconds=30)  # crosses the minute boundary
         await _push(hass, fake_tdmm, {"fan_part_pct": 50})
-        await _state(hass, "sensor.a1_end_time", expected)
+        await until(lambda: coord.data.fan_part_pct == 50)
+        await hass.async_block_till_done()
+        assert hass.states.get("sensor.a1_end_time").state == expected
         now += timedelta(seconds=120)
         await _push(hass, fake_tdmm, {"mc_remaining_time": 90})
-        await _state(hass, "sensor.a1_end_time", "2026-10-30T13:32:00+00:00")
+        await _state(hass, "sensor.a1_end_time", "2026-10-30T13:33:00+00:00")  # 12:03:20 + 90 min
 
 
 async def test_end_time_none_when_idle(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
@@ -117,7 +134,7 @@ async def test_unknown_gcode_state_maps_unknown(hass: HomeAssistant, fake_tdmm: 
 )
 async def test_wifi_signal_parsing(hass: HomeAssistant, fake_tdmm: FakeTdmm, raw: str | None, expected: str) -> None:
     fake_tdmm.statuses[1] = {**_raw(), "wifi_signal": raw}
-    await setup_integration(hass, fake_tdmm)
+    await _setup(hass, fake_tdmm, enable=("wifi_signal",))
     await _state(hass, "sensor.a1_wifi_signal", expected)
 
 
