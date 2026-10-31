@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,7 @@ from custom_components.tdmm.const import DOMAIN
 from .conftest import get_device, setup_integration, until
 
 if TYPE_CHECKING:
+    import pytest
     from homeassistant.core import HomeAssistant
 
     from .fake_tdmm import FakeTdmm
@@ -71,7 +73,10 @@ async def test_ams_entities_created_from_snapshot(hass: HomeAssistant, fake_tdmm
     assert hass.states.get("sensor.a1_main_temperature").state == "27.5"
 
 
-async def test_ams_device_via_printer(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
+async def test_ams_device_via_printer(
+    hass: HomeAssistant, fake_tdmm: FakeTdmm, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.WARNING)
     fake_tdmm.statuses[1] = _raw()
     await setup_integration(hass, fake_tdmm)
     await _ready(hass)
@@ -80,6 +85,7 @@ async def test_ams_device_via_printer(hass: HomeAssistant, fake_tdmm: FakeTdmm) 
     assert ams is not None
     assert printer is not None
     assert ams.via_device_id == printer.id
+    assert not [r for r in caplog.records if "via_device" in r.getMessage() and "deprecat" in r.getMessage().lower()]
     ent = er.async_get(hass).async_get("sensor.a1_main_humidity")
     assert ent.device_id == ams.id
 

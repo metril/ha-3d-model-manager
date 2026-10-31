@@ -286,7 +286,7 @@ def _ams_device(coord: PrinterCoordinator, unit_id: int) -> DeviceInfo:
     data = coord.data
     unit = next((u for u in data.ams_units if u.id == unit_id), None) if data else None
     # A unit first seen via trays gets fallback device info that is not updated later.
-    return ams_device_info(coord.printer, unit or AmsUnit(id=unit_id))
+    return ams_device_info(coord, unit or AmsUnit(id=unit_id))
 
 
 class TdmmAmsTraySensor(TdmmSensor):
