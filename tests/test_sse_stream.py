@@ -314,3 +314,78 @@ async def test_ha_stop_cancels_task(hass, fake_tdmm, started) -> None:
     hass.bus.async_fire(EVENT_HOMEASSISTANT_STOP)
     await _until(lambda: task.done())
     assert not h.stream.running
+
+
+async def test_malformed_printer_id_does_not_kill_stream(fake_tdmm, started) -> None:
+    fake_tdmm.snapshot_on_connect = False
+    h = await started()
+    await _until(lambda: h.hub.connected)
+    await fake_tdmm.push("printer.status", {"printer_id": [1], "status": _raw()})
+    await fake_tdmm.push("printer.delta", {"printer_id": {}, "patch": {"a": 1}})
+    await fake_tdmm.push("printer.status", {"printer_id": 1, "status": _raw()})
+    await _until(lambda: h.coords[1].data is not None)
+    assert h.stream.running
+    assert h.stream.stats.connects == 1
+
+
+async def test_listener_exception_does_not_kill_stream(fake_tdmm, started) -> None:
+    fake_tdmm.statuses[1] = _raw()
+    h = await started()
+    await _until(lambda: h.coords[1].data is not None)
+
+    def boom() -> None:
+        raise RuntimeError("listener")
+
+    h.coords[1].async_add_listener(boom)
+    await fake_tdmm.push("printer.delta", {"printer_id": 1, "patch": {"mc_percent": 50}})
+    await _until(lambda: h.coords[1].raw["mc_percent"] == 50)
+    await fake_tdmm.push("printer.delta", {"printer_id": 1, "patch": {"mc_percent": 51}})
+    await _until(lambda: h.coords[1].raw["mc_percent"] == 51)
+    assert h.stream.running
+    assert h.stream.stats.connects == 1
+
+
+async def test_on_connected_exception_does_not_kill_stream(fake_tdmm, started) -> None:
+    fake_tdmm.snapshot_on_connect = False
+    h = await started(snapshot_timeout=0.05)
+    h.connected.side_effect = RuntimeError("cb")
+    await _until(lambda: h.connected.call_count == 1)
+    await fake_tdmm.drop_streams()
+    await _until(lambda: h.stream.stats.connects == 2)
+    assert h.stream.running
+
+
+async def test_stop_during_fallback_wait_does_not_reconnect(hass, fake_tdmm, monkeypatch) -> None:
+    fake_tdmm.snapshot_on_connect = False
+    h = await _make(hass, fake_tdmm, snapshot_timeout=30.0)
+    cancelling = asyncio.Event()
+
+    async def slow_fallback(resp: Any) -> None:
+        try:
+            await asyncio.sleep(30)
+        except asyncio.CancelledError:
+            cancelling.set()
+            await asyncio.sleep(0.2)  # slow cleanup keeps the stream task awaiting the fallback
+            raise
+
+    monkeypatch.setattr(h.stream, "_fallback", slow_fallback)
+    h.stream.start()
+    await _until(lambda: h.hub.connected)
+    await fake_tdmm.drop_streams()
+    await asyncio.wait_for(cancelling.wait(), 5)
+    async with asyncio.timeout(3):
+        await h.stream.stop()
+    assert h.stream.stats.connects == 1
+    assert not h.stream.running
+    assert fake_tdmm.requests["/api/events"] == 1
+
+
+async def test_fallback_401_calls_auth_failed_once(fake_tdmm, started) -> None:
+    fake_tdmm.snapshot_on_connect = False
+    fake_tdmm.overrides["status[1]"] = (401, {})
+    h = await started(snapshot_timeout=0.05)
+    await _until(lambda: not h.stream.running)
+    await asyncio.sleep(0.1)
+    h.auth_failed.assert_called_once()
+    h.connected.assert_not_called()
+    assert fake_tdmm.requests["/api/events"] == 1

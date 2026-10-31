@@ -138,7 +138,11 @@ class StreamStats:
 
 
 class EventStream:
-    """One long-lived ``/api/events`` stream per entry, with reconnect and backoff."""
+    """One long-lived ``/api/events`` stream per entry, with reconnect and backoff.
+
+    ``stop()`` sets ``hub.connected`` False without notifying listeners (unload tears entities down).
+    The snapshot timeout uses real ``asyncio.sleep`` by design; only the reconnect backoff is injectable.
+    """
 
     def __init__(
         self,
@@ -166,6 +170,7 @@ class EventStream:
         self._rand = rand
         self._task: asyncio.Task[None] | None = None
         self._retry_ms: int | None = None
+        self._auth_failed = False
         self.stats = StreamStats()
 
     @property
@@ -214,10 +219,17 @@ class EventStream:
             except (TdmmError, aiohttp.ClientError, TimeoutError) as err:
                 self.stats.last_error = str(err) or type(err).__name__
                 _LOGGER.debug("Event stream error: %s", self.stats.last_error)
+            except Exception as err:
+                self.stats.last_error = str(err) or type(err).__name__
+                _LOGGER.exception("Unexpected event stream error")
             if connected:
                 self._disconnected()
-                if loop.time() - started >= self._stable_after:
-                    attempt = 0
+            if self._auth_failed:
+                _LOGGER.error("3DMM rejected the API key; stopping event stream")
+                self._on_auth_failed()
+                return
+            if connected and loop.time() - started >= self._stable_after:
+                attempt = 0
             delay = next_backoff(attempt, self._retry_ms, self._rand)
             attempt += 1
             _LOGGER.debug("Reconnecting event stream in %.1fs", delay)
@@ -240,13 +252,22 @@ class EventStream:
         try:
             async for chunk in resp.content.iter_any():
                 for ev in parser.feed(chunk):
-                    self._dispatch(ev)
+                    try:
+                        self._dispatch(ev)
+                    except Exception:
+                        _LOGGER.exception("Error handling event %r", ev.event)
                 self._retry_ms = parser.retry_ms
         finally:
             self._retry_ms = parser.retry_ms
             fallback.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
+            try:
                 await fallback
+            except asyncio.CancelledError:
+                task = asyncio.current_task()
+                if task is not None and task.cancelling():
+                    raise  # our own cancellation, not the fallback's
+            except Exception:
+                _LOGGER.exception("Snapshot fallback failed")
 
     async def _fallback(self, resp: aiohttp.ClientResponse) -> None:
         """If no snapshot arrives in time, fetch one /status per missing printer."""
@@ -257,8 +278,8 @@ class EventStream:
             try:
                 raw = await self._hub.api.status(pid)
             except TdmmAuthError:
+                self._auth_failed = True
                 resp.close()
-                self._on_auth_failed()
                 return
             except TdmmError as err:
                 _LOGGER.debug("Fallback status for printer %s failed: %s", pid, err)
