@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 import aiohttp
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.core import callback
 from homeassistant.util import dt as dt_util
 
 from .exceptions import TdmmAuthError, TdmmError
@@ -184,6 +185,7 @@ class EventStream:
         self._task = self._entry.async_create_background_task(self._hass, self._run(), "tdmm_event_stream")
         self._entry.async_on_unload(self._hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self._on_ha_stop))
 
+    @callback
     def _on_ha_stop(self, _event: Event) -> None:
         if self._task is not None:
             self._task.cancel()
