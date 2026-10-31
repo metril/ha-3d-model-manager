@@ -13,6 +13,7 @@ from .api import TdmmApiClient
 from .const import CONF_PRINTER_IDS, CONTROL_PLATFORMS, DOMAIN, PLATFORMS
 from .coordinator import PrinterCoordinator, TdmmHub, TdmmRuntime
 from .exceptions import TdmmAuthError, TdmmError
+from .frontend import async_register_frontend
 from .sse import EventStream
 
 if TYPE_CHECKING:
@@ -57,6 +58,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: TdmmConfigEntry) -> bool
 
     hub.stream = EventStream(hass, entry, hub, coordinators, on_auth_failed=_auth_failed, on_connected=_connected)
     await hass.config_entries.async_forward_entry_setups(entry, _platforms(hub))
+    await async_register_frontend(hass)
     hub.stream.start()
     return True
 
