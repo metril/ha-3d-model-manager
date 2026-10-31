@@ -43,7 +43,8 @@
       "no_printers": "Select at least one printer."
     },
     "abort": {
-      "cannot_connect": "Could not connect to the server."
+      "cannot_connect": "Could not connect to the server.",
+      "invalid_auth": "The API key was rejected."
     }
   },
   "entity": {

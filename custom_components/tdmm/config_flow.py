@@ -18,7 +18,7 @@ from homeassistant.helpers.selector import (
 
 from .api import TdmmApiClient, normalize_url
 from .const import CONF_API_KEY, CONF_PRINTER_IDS, CONF_URL, CONF_VERIFY_SSL, DOMAIN
-from .exceptions import TdmmAuthError, TdmmConnectionError, TdmmScopeError
+from .exceptions import TdmmAuthError, TdmmError, TdmmScopeError
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -91,7 +91,7 @@ class TdmmConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_auth"
             except TdmmScopeError:
                 errors["base"] = "missing_read_scope"
-            except TdmmConnectionError:
+            except TdmmError:
                 errors["base"] = "cannot_connect"
             if not errors:
                 url = normalize_url(user_input[CONF_URL])
@@ -117,12 +117,15 @@ class TdmmConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_printers(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         assert self._ping is not None
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(
-                title=self._ping.label or self._data[CONF_URL],
-                data=self._data,
-                options={CONF_PRINTER_IDS: [int(i) for i in user_input[CONF_PRINTER_IDS]]},
-            )
+            if user_input[CONF_PRINTER_IDS]:
+                return self.async_create_entry(
+                    title=self._ping.label or self._data[CONF_URL],
+                    data=self._data,
+                    options={CONF_PRINTER_IDS: [int(i) for i in user_input[CONF_PRINTER_IDS]]},
+                )
+            errors["base"] = "no_printers"
         schema = vol.Schema(
             {
                 vol.Required(CONF_PRINTER_IDS, default=[str(p.id) for p in self._printers]): _printer_selector(
@@ -132,7 +135,10 @@ class TdmmConfigFlow(ConfigFlow, domain=DOMAIN):
         )
         warning = "" if "control" in self._ping.scopes else CONTROL_WARNING
         return self.async_show_form(
-            step_id="printers", data_schema=schema, description_placeholders={"control_warning": warning}
+            step_id="printers",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders={"control_warning": warning},
         )
 
 
@@ -148,9 +154,12 @@ class TdmmOptionsFlow(OptionsFlowWithReload):
         try:
             client, ping = await async_validate(self.hass, self.config_entry.data)
             printers = _available(await client.printers(), ping)
-        except (vol.Invalid, TdmmAuthError, TdmmScopeError, TdmmConnectionError):
+        except (TdmmAuthError, TdmmScopeError):
+            return self.async_abort(reason="invalid_auth")
+        except (vol.Invalid, TdmmError):
             return self.async_abort(reason="cannot_connect")
         ids = {p.id for p in printers}
-        current = [str(i) for i in self.config_entry.options.get(CONF_PRINTER_IDS, []) if i in ids]
+        selected = self.config_entry.options.get(CONF_PRINTER_IDS, ids)
+        current = [str(p.id) for p in printers if p.id in selected]
         schema = vol.Schema({vol.Required(CONF_PRINTER_IDS, default=current): _printer_selector(printers)})
         return self.async_show_form(step_id="init", data_schema=schema, errors=errors)

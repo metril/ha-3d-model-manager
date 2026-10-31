@@ -11,7 +11,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from custom_components.tdmm.config_flow import entry_unique_id
 from custom_components.tdmm.const import CONF_API_KEY, CONF_PRINTER_IDS, CONF_URL, CONF_VERIFY_SSL, DOMAIN
 
-from .conftest import setup_integration, until
+from .conftest import setup_entry, setup_integration, until
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -114,3 +114,36 @@ async def test_options_flow_updates_printer_ids_and_reloads(hass: HomeAssistant,
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options == {CONF_PRINTER_IDS: [1, 2]}
     await until(lambda: set(getattr(entry, "runtime_data", None) and entry.runtime_data.coordinators or ()) == {1, 2})
+
+
+async def test_printers_step_rejects_empty_selection(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
+    result = await _start(hass, fake_tdmm)
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_PRINTER_IDS: []})
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "printers"
+    assert result["errors"] == {"base": "no_printers"}
+
+
+async def test_user_step_unexpected_tdmm_error(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
+    from custom_components.tdmm.exceptions import TdmmError
+
+    with patch("custom_components.tdmm.config_flow.async_validate", side_effect=TdmmError):
+        assert (await _start(hass, fake_tdmm))["errors"] == {"base": "cannot_connect"}
+
+
+async def test_options_default_all_when_no_option(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    fake_tdmm.printers = PRINTERS
+    entry = MockConfigEntry(domain=DOMAIN, data=_creds(fake_tdmm), unique_id="x")
+    entry.add_to_hass(hass)
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["data_schema"]({})[CONF_PRINTER_IDS] == ["1", "2"]
+
+
+async def test_options_abort_invalid_auth(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
+    entry = await setup_entry(hass, fake_tdmm)
+    fake_tdmm.overrides["ping"] = (401, {})
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "invalid_auth"
