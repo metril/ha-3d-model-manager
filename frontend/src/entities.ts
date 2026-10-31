@@ -75,6 +75,8 @@ export interface ResolvedEntities {
   deviceFound: boolean;
   byKey: Partial<Record<EntityKey, string>>;
   ams: AmsUnitEntities[];
+  /** Tray/unit entities lacking ams_unit attributes (unavailable): re-resolve when their state changes. */
+  unresolved: string[];
 }
 
 const PLATFORM = "tdmm";
@@ -88,7 +90,7 @@ const num = (v: unknown): number | undefined => {
 };
 
 export function resolveEntities(hass: HomeAssistant, deviceId: string): ResolvedEntities {
-  const result: ResolvedEntities = { deviceFound: !!hass.devices?.[deviceId], byKey: {}, ams: [] };
+  const result: ResolvedEntities = { deviceFound: !!hass.devices?.[deviceId], byKey: {}, ams: [], unresolved: [] };
   if (!result.deviceFound) return result;
 
   const children = new Set<string>();
@@ -119,10 +121,16 @@ export function resolveEntities(hass: HomeAssistant, deviceId: string): Resolved
     }
     const attrs = hass.states[e.entity_id]?.attributes;
     const unitNo = num(attrs?.ams_unit);
-    if (unitNo === undefined) continue;
+    if (unitNo === undefined) {
+      if (Object.hasOwn(TRAY_FIELD, tk) || Object.hasOwn(UNIT_FIELD, tk)) result.unresolved.push(e.entity_id);
+      continue;
+    }
     if (Object.hasOwn(TRAY_FIELD, tk)) {
       const slotNo = num(attrs?.slot);
-      if (slotNo === undefined) continue;
+      if (slotNo === undefined) {
+        result.unresolved.push(e.entity_id);
+        continue;
+      }
       const u = unitOf(unitNo);
       let s = u.slots.find((x) => x.slot === slotNo);
       if (!s) u.slots.push((s = { slot: slotNo }));
@@ -149,7 +157,7 @@ export function resolveEntities(hass: HomeAssistant, deviceId: string): Resolved
 }
 
 export function allEntityIds(r: ResolvedEntities): string[] {
-  const ids: string[] = Object.values(r.byKey);
+  const ids: string[] = [...Object.values(r.byKey), ...r.unresolved];
   for (const u of r.ams) {
     if (u.humidity) ids.push(u.humidity);
     if (u.temperature) ids.push(u.temperature);

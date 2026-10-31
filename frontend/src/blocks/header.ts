@@ -1,6 +1,6 @@
 import { css, html, nothing } from "lit";
 import { registerBlock } from "./registry.ts";
-import { fmtText, present } from "./format.ts";
+import { fmtEnum, fmtText, present } from "./format.ts";
 
 registerBlock({
   type: "header", label: "Header", icon: "printer", size: 1,
@@ -12,7 +12,7 @@ registerBlock({
     return html`<div class="tdmm-header">
       <ha-icon .icon=${ctx.icon("printer")}></ha-icon>
       <span class="tdmm-header-name">${fmtText(model)}</span>
-      <span class="tdmm-chip">${fmtText(st)}</span>
+      <span class="tdmm-chip">${fmtEnum(ctx.hass, st)}</span>
     </div>`;
   },
   styles: css`

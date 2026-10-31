@@ -1,4 +1,3 @@
-declare const __TDMM_VERSION__: string;
 import "./blocks/index.ts";
 import { TdmmProgressCard } from "./cards/progress/tdmm-progress-card.ts";
 import { TdmmPrinterCard } from "./cards/printer/tdmm-printer-card.ts";

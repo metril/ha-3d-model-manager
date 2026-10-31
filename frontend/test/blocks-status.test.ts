@@ -21,6 +21,13 @@ const ctxFor = (opts: MakeHassOpts = {}): BlockContext => {
     call: async () => undefined,
   };
 };
+const fmtHtml = (type: BlockType): string => {
+  const o = ctxFor();
+  const ctx = { ...o, hass: { ...o.hass, formatEntityState: (s: { state: string }) => `L10N-${s.state}` } };
+  const div = document.createElement("div");
+  render(getBlock(type).render(ctx) as TemplateResult, div);
+  return div.innerHTML;
+};
 const html = (type: BlockType, opts?: MakeHassOpts): string => {
   const div = document.createElement("div");
   const r = getBlock(type).render(ctxFor(opts));
@@ -114,5 +121,13 @@ describe("block style registration", () => {
     const block = blockStyles();
     expect(block.length).toBeGreaterThan(0);
     for (const s of block) expect(text).toContain(s.cssText);
+  });
+});
+
+describe("formatEntityState", () => {
+  it("header and job use hass.formatEntityState when present", () => {
+    expect(fmtHtml("header")).toContain("L10N-running");
+    expect(fmtHtml("job")).toContain("L10N-printing");
+    expect(html("header")).toContain("running");
   });
 });

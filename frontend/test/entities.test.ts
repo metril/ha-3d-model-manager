@@ -3,6 +3,17 @@ import { ENTITY_KEYS, allEntityIds, resolveEntities } from "../src/entities.js";
 import { makeHass } from "./fixtures/hass.js";
 
 describe("resolveEntities", () => {
+  it("tray/unit entities lacking attributes land in unresolved", () => {
+    const h = makeHass();
+    const tray = Object.values(h.entities).find((e) => e.translation_key === "tray_material")!.entity_id;
+    const hum = Object.values(h.entities).find((e) => e.translation_key === "ams_humidity")!.entity_id;
+    for (const id of [tray, hum]) h.states[id] = { ...h.states[id]!, state: "unavailable", attributes: {} };
+    const r = resolveEntities(h, "dev_p1");
+    expect(r.unresolved.sort()).toEqual([hum, tray].sort());
+    expect(allEntityIds(r)).toEqual(expect.arrayContaining([tray, hum]));
+    expect(resolveEntities(makeHass(), "dev_p1").unresolved).toEqual([]);
+  });
+
   it("resolves every EntityKey for fixture printer", () => {
     const r = resolveEntities(makeHass(), "dev_p1");
     expect(r.deviceFound).toBe(true);
@@ -75,7 +86,7 @@ describe("resolveEntities", () => {
 
   it("deviceFound false for unknown device", () => {
     const r = resolveEntities(makeHass(), "nope");
-    expect(r).toEqual({ deviceFound: false, byKey: {}, ams: [] });
+    expect(r).toEqual({ deviceFound: false, byKey: {}, ams: [], unresolved: [] });
   });
 
   it("omits keys and AMS when absent", () => {

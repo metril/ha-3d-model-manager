@@ -64,11 +64,16 @@ describe("tdmm-printer-card", () => {
     expect(spy).toHaveBeenCalled();
   });
   it("light and dark both render", async () => {
+    const out: string[] = [];
     for (const dark of [true, false]) {
       const el = await mk({}, makeHass({ dark }));
       expect(el.shadowRoot!.textContent).toContain("42%");
       expect(el.shadowRoot!.innerHTML).not.toMatch(/style="[^"]*(#[0-9a-f]{3}|rgb\()/i);
+      const css = (el.constructor as typeof TdmmPrinterCard).elementStyles.map((s) => (s as { cssText: string }).cssText).join("");
+      expect(css.replace(/var\([^)]*\)/g, "")).not.toMatch(/#[0-9a-f]{3,8}\b/i);
+      out.push(el.shadowRoot!.innerHTML);
     }
+    expect(out[0]).toBe(out[1]); // theme is CSS-variable driven, not mode-branched
   });
   it("getStubConfig and getGridOptions", async () => {
     expect(TdmmPrinterCard.getStubConfig(makeHass()).device_id).toBe("dev_p1");

@@ -1,6 +1,6 @@
 import { css, html, nothing } from "lit";
 import { registerBlock } from "./registry.ts";
-import { fmtText, present } from "./format.ts";
+import { fmtEnum, fmtText, present } from "./format.ts";
 
 registerBlock({
   type: "job", label: "Current job", icon: "printer", size: 2,
@@ -15,7 +15,7 @@ registerBlock({
       ${typeof pic === "string" && pic ? html`<img class="tdmm-job-thumb" src=${pic} alt="Print preview" />` : nothing}
       <div class="tdmm-job-info">
         <span class="tdmm-job-name">${fmtText(model)}</span>
-        ${stage ? html`<span class="tdmm-job-stage">${fmtText(stage)}</span>` : nothing}
+        ${stage ? html`<span class="tdmm-job-stage">${fmtEnum(ctx.hass, stage)}</span>` : nothing}
       </div>
     </div>`;
   },

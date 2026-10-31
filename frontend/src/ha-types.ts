@@ -29,4 +29,5 @@ export interface HomeAssistant {
   themes: { darkMode: boolean };
   callService(domain: string, service: string, data?: Record<string, unknown>): Promise<unknown>;
   localize?(key: string): string;
+  formatEntityState?(stateObj: HassEntity, state?: string): string;
 }

@@ -38,6 +38,11 @@ export function fmtText(s?: HassEntity): string {
   return isAvailable(s) ? (s as HassEntity).state : DASH;
 }
 
+/** Localized enum state via hass.formatEntityState when available, else the raw state. */
+export function fmtEnum(hass: { formatEntityState?: (s: HassEntity) => string }, s?: HassEntity): string {
+  return isAvailable(s) ? (hass.formatEntityState?.(s as HassEntity) ?? (s as HassEntity).state) : DASH;
+}
+
 export function fmtInt(s?: HassEntity): string {
   const n = numeric(s);
   return n === undefined ? DASH : String(Math.round(n));

@@ -1,11 +1,4 @@
-import type { HomeAssistant, HassEntity } from "../ha-types.ts";
-
-export interface HassSnapshot {
-  states: Record<string, HassEntity>;
-  entities: HomeAssistant["entities"];
-  devices: HomeAssistant["devices"];
-  language: string;
-}
+import type { HomeAssistant } from "../ha-types.ts";
 
 export function hassChanged(prev: HomeAssistant | undefined, next: HomeAssistant, ids: readonly string[]): boolean {
   if (!prev) return true;

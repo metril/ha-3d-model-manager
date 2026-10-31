@@ -20,6 +20,19 @@ describe("tdmm-ams-card", () => {
     expect(el.shadowRoot!.querySelectorAll(".tdmm-slot").length).toBe(4);
     expect(el.getCardSize()).toBeGreaterThan(1);
   });
+  it("slots reappear once unavailable tray attributes are restored", async () => {
+    const h = makeHass();
+    const trays = Object.values(h.entities).filter((e) => /^tray_/.test(e.translation_key ?? "")).map((e) => e.entity_id);
+    const hum = idOf(h, (e) => e.translation_key === "ams_humidity");
+    const tmp = idOf(h, (e) => e.translation_key === "ams_temperature");
+    const states = { ...h.states };
+    for (const id of [...trays, hum, tmp]) states[id] = { ...h.states[id]!, state: "unavailable", attributes: {} };
+    const el = await mk({ ...h, states });
+    expect(el.shadowRoot!.querySelectorAll(".tdmm-slot").length).toBe(0);
+    el.hass = { ...h, states: { ...h.states } };
+    await el.updateComplete;
+    expect(el.shadowRoot!.querySelectorAll(".tdmm-slot").length).toBe(4);
+  });
   it("two AMS units render two rows", async () => {
     const el = await mk(makeHass({ amsUnits: 2 }));
     expect(el.shadowRoot!.querySelectorAll(".tdmm-ams-unit").length).toBe(2);

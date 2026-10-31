@@ -31,6 +31,14 @@ describe("tdmm-progress-card", () => {
     await el.updateComplete;
     expect(spy).not.toHaveBeenCalled();
   });
+  it("empty device_id renders a Select a printer placeholder", async () => {
+    const el = document.createElement("tdmm-progress-card") as TdmmProgressCard;
+    el.setConfig(cfg({ device_id: "" }));
+    el.hass = makeHass();
+    document.body.append(el);
+    await el.updateComplete;
+    expect(el.shadowRoot!.querySelector("ha-alert")!.textContent).toContain("Select a printer");
+  });
   it("getStubConfig picks first tdmm device", () => {
     expect(TdmmProgressCard.getStubConfig(makeHass()).device_id).toBe("dev_p1");
     expect(TdmmProgressCard.getStubConfig({ ...makeHass(), entities: {} }).device_id).toBe("");

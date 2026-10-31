@@ -10,7 +10,7 @@ import { hassChanged } from "./diff.ts";
 
 export type BlockConfig = BlockEntry;
 
-const EMPTY: ResolvedEntities = { deviceFound: false, byKey: {}, ams: [] };
+const EMPTY: ResolvedEntities = { deviceFound: false, byKey: {}, ams: [], unresolved: [] };
 
 export abstract class TdmmBaseCard extends LitElement {
   protected config?: NormalizedConfig;
@@ -49,7 +49,8 @@ export abstract class TdmmBaseCard extends LitElement {
   set hass(h: HomeAssistant) {
     const old = this._hass;
     this._hass = h;
-    if (!old || old.entities !== h.entities || old.devices !== h.devices) this.refresh();
+    if (!old || old.entities !== h.entities || old.devices !== h.devices ||
+      this.resolved.unresolved.some((id) => old.states[id] !== h.states[id])) this.refresh();
     if (hassChanged(old, h, this.usedIds)) this.requestUpdate();
   }
   get hass(): HomeAssistant {
@@ -58,7 +59,7 @@ export abstract class TdmmBaseCard extends LitElement {
 
   protected refresh(): void {
     this.resolved = this._hass && this.config ? resolveEntities(this._hass, this.config.device_id) : EMPTY;
-    this.usedIds = this.config ? this.computeUsedIds().filter(Boolean) : [];
+    this.usedIds = this.config ? [...new Set([...this.computeUsedIds().filter(Boolean), ...this.resolved.unresolved])] : [];
   }
 
   protected abstract visibleBlocks(): BlockEntry[];
@@ -128,8 +129,13 @@ export abstract class TdmmBaseCard extends LitElement {
     return html`<ha-alert alert-type="warning">Printer not found</ha-alert>`;
   }
 
+  protected renderPlaceholder(): TemplateResult {
+    return html`<ha-card><ha-alert alert-type="info">Select a printer</ha-alert></ha-card>`;
+  }
+
   protected render(): TemplateResult | typeof nothing {
     if (!this.config || !this._hass) return nothing;
+    if (!this.config.device_id) return this.renderPlaceholder();
     if (!this.resolved.deviceFound) return html`<ha-card>${this.renderNotFound()}</ha-card>`;
     return html`<ha-card><div class="tdmm-blocks">${this.renderBlocks(this.visibleBlocks())}</div></ha-card>`;
   }

@@ -67,6 +67,7 @@ export class TdmmPrinterCard extends TdmmBaseCard {
 
   protected render(): TemplateResult | typeof nothing {
     if (!this.config || !this.hass) return nothing;
+    if (!this.config.device_id) return this.renderPlaceholder();
     if (!this.resolved.deviceFound) return html`<ha-card>${this.renderNotFound()}</ha-card>`;
     const shown = this.shownTabs();
     return html`<ha-card>

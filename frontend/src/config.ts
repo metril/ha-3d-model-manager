@@ -92,7 +92,7 @@ function normalizeList(raw: unknown, defaults: BlockEntry[], where: string): Blo
 
 export function normalizeConfig(raw: unknown): NormalizedConfig {
   const r = isObj(raw) ? raw : {};
-  if (typeof r.device_id !== "string" || r.device_id === "") throw new Error("device_id is required");
+  if (typeof r.device_id !== "string") throw new Error("device_id is required");
   const type = typeof r.type === "string" ? r.type : CARD_TYPES.printer;
   let kind: CardKind = "printer";
   try { kind = kindFromType(type); } catch { console.warn(`tdmm: unknown card type "${type}"; treating as printer`); }

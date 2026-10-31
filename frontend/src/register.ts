@@ -1,4 +1,3 @@
-declare const __TDMM_VERSION__: string;
 export const TDMM_VERSION: string = __TDMM_VERSION__;
 
 export function defineOnce(tag: string, ctor: CustomElementConstructor): void {

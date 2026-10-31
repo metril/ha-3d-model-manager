@@ -122,6 +122,7 @@ describe("control blocks", () => {
     inp.value = "999";
     inp.dispatchEvent(new Event("change"));
     expect(hass.callService).toHaveBeenCalledWith("number", "set_value", { entity_id: id, value: 300 });
+    expect(inp.value).toBe("300");
   });
   it("speed adds disabled placeholder when state not in options", () => {
     const { div } = mount("speed", { states: { "select.x1c_garage_speed_profile_renamed": { state: "weird", attributes: { options: ["silent", "sport"] } } } });

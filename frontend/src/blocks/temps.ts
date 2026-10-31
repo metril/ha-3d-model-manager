@@ -31,6 +31,7 @@ registerBlock({
           const lo = Number(st.attributes.min), hi = Number(st.attributes.max);
           if (st.attributes.min != null && Number.isFinite(lo)) v = Math.max(lo, v);
           if (st.attributes.max != null && Number.isFinite(hi)) v = Math.min(hi, v);
+          (e.target as HTMLInputElement).value = String(v);
           void ctx.call("number", "set_value", { entity_id: id, value: v });
         };
         return html` <span class="tdmm-temp-target">/ <input class="tdmm-temp-input" type="number" min=${ifDefined(st.attributes.min as number | undefined)} max=${ifDefined(st.attributes.max as number | undefined)} step=${ifDefined(st.attributes.step as number | undefined)} aria-label=${`${x.label} target`}
