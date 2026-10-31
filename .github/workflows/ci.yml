@@ -58,10 +58,31 @@ jobs:
             exit 1
           fi
 
+  cards:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm install -g npm@11.12.1
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npm run docs
+      - name: Bundle and docs are up to date
+        run: git diff --exit-code -- ../custom_components/tdmm/frontend/tdmm-cards.js ../docs/theming.md
+
   # Single required check; skipped jobs (e.g. PR-only `version`) count as pass.
   tests:
     if: always()
-    needs: [lint, pytest, version]
+    needs: [lint, pytest, cards, version]
     runs-on: ubuntu-latest
     steps:
       - name: Aggregate results
