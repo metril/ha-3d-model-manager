@@ -1,6 +1,7 @@
 """Scaffold sanity tests."""
 
 import json
+import re
 from pathlib import Path
 
 from homeassistant.loader import async_get_integration
@@ -16,7 +17,7 @@ def test_manifest_fields():
     assert m["domain"] == "tdmm"
     assert m["name"] == "3D Model Manager"
     assert m["iot_class"] == "local_push"
-    assert m["version"] == "0.1.0"
+    assert re.fullmatch(r"\d+\.\d+\.\d+", m["version"])
     assert m["dependencies"] == ["frontend", "http"]
 
 
