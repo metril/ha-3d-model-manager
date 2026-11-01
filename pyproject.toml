@@ -1,5 +1,5 @@
 [project]
-name = "ha-3d-model-manager-integration"
+name = "ha-3d-model-manager"
 version = "0.1.0"
 description = "Home Assistant integration for 3D Model Manager (tdmm)"
 requires-python = ">=3.13.2"
