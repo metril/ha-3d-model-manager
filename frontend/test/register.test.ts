@@ -9,7 +9,7 @@ describe("register", () => {
     const w = window as unknown as { customCards: { type: string; documentationURL: string }[] };
     const hits = w.customCards.filter((c) => c.type === "tdmm-x");
     expect(hits).toHaveLength(1);
-    expect(hits[0]!.documentationURL).toBe("https://github.com/metril/ha-3d-model-manager-integration#cards");
+    expect(hits[0]!.documentationURL).toBe("https://github.com/metril/ha-3d-model-manager#cards");
   });
   it("defineOnce does not throw twice", () => {
     class A extends HTMLElement {}

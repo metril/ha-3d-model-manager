@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -20,6 +21,9 @@ if TYPE_CHECKING:
     from .models import AmsUnit, PrinterInfo
 
 
+_HAS_VIA_DEVICE_ID = "via_device_id" in DeviceInfo.__annotations__
+
+
 def _device_key(printer: PrinterInfo) -> str:
     return printer.serial or str(printer.id)
 
@@ -32,16 +36,28 @@ class TdmmEntityDescription(EntityDescription):
     exists_fn: Callable[[PrinterInfo], bool] = lambda _: True
 
 
-def ams_device_info(printer: PrinterInfo, unit: AmsUnit) -> DeviceInfo:
+def ams_device_info(coordinator: PrinterCoordinator, unit: AmsUnit) -> DeviceInfo:
     """Device info for an AMS unit, attached to its printer."""
+    printer = coordinator.printer
     key = _device_key(printer)
-    return DeviceInfo(
+    info = DeviceInfo(
         identifiers={(DOMAIN, f"{key}_ams{unit.id}")},
         name=f"{printer.name} {unit.label or f'AMS {unit.id}'}",
         manufacturer=MANUFACTURER,
         model="AMS",
-        via_device=(DOMAIN, key),
     )
+    if _HAS_VIA_DEVICE_ID:
+        parent = dr.async_get(coordinator.hass).async_get_or_create(
+            config_entry_id=coordinator.config_entry.entry_id,
+            identifiers={(DOMAIN, key)},
+            name=printer.name,
+            model=printer.model,
+            manufacturer=MANUFACTURER,
+        )
+        info["via_device_id"] = parent.id
+    else:
+        info["via_device"] = (DOMAIN, key)
+    return info
 
 
 class TdmmEntity(CoordinatorEntity[PrinterCoordinator]):

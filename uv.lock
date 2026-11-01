@@ -1874,7 +1874,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ha-3d-model-manager-integration"
+name = "ha-3d-model-manager"
 version = "0.1.0"
 source = { virtual = "." }
 
