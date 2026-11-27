@@ -93,21 +93,21 @@ theme:
 
 The full variable and key reference is in [docs/theming.md](docs/theming.md).
 
-## Olympos cards
+## Pop-up cards
 
 A second, dark-first set built for pop-up dashboards. They use the same entities as the cards above and can sit alongside them.
 
 | Card | Type | What it shows |
 | --- | --- | --- |
-| Olympos printer | `custom:tdmm-olympos-printer-card` | Pop-up content: status chips, hero with progress, camera, value tiles, AMS spools, Pause/Resume and Stop. Charts and Device screens open from the header. Uses two columns at 700px and wider. |
-| Olympos tile | `custom:tdmm-olympos-tile-card` | A home-grid tile (`variant: compact` or `wide`). Tapping it goes to `#printer` by default; set `tap_action` to change that. |
-| Olympos AMS | `custom:tdmm-olympos-ams-card` | Each AMS unit with humidity, temperature and spools. Tap a spool for its details. |
+| Printer pop-up | `custom:tdmm-printer-popup-card` | Pop-up content: status chips, hero with progress, camera, value tiles, AMS spools, Pause/Resume and Stop. Charts and Device screens open from the header. Uses two columns at 700px and wider. |
+| Printer tile | `custom:tdmm-printer-tile-card` | A home-grid tile (`variant: compact` or `wide`). Tapping it goes to `#printer` by default; set `tap_action` to change that. |
+| Spools | `custom:tdmm-spools-card` | Each AMS unit with humidity, temperature and spools. Tap a spool for its details. |
 
 ```yaml
-type: custom:tdmm-olympos-printer-card
+type: custom:tdmm-printer-popup-card
 device_id: <printer device id>
 theme:
-  palette: vivid   # home (default), vivid or mocha
+  palette: vivid   # default, vivid or mocha
   accent: "#00AE42"
 ```
 
