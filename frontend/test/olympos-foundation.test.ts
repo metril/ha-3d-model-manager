@@ -66,20 +66,21 @@ describe("olympos config", () => {
   });
 });
 
-describe("olympos stub cards", () => {
+describe("olympos cards render with preset", () => {
   for (const [tag, Cls, type] of [
     ["tdmm-olympos-printer-card", TdmmOlymposPrinterCard, "printer"],
     ["tdmm-olympos-tile-card", TdmmOlymposTileCard, "tile"],
     ["tdmm-olympos-ams-card", TdmmOlymposAmsCard, "ams"],
   ] as const) {
-    it(`${tag} renders placeholder`, async () => {
+    it(`${tag} renders content with olympos preset`, async () => {
       if (!customElements.get(tag)) customElements.define(tag, Cls);
       const el = document.createElement(tag) as InstanceType<typeof Cls>;
       el.setConfig({ type: `custom:tdmm-olympos-${type}-card`, device_id: "dev_p1" });
       el.hass = makeHass();
       document.body.append(el);
       await el.updateComplete;
-      expect(el.shadowRoot!.querySelector(".olympos-placeholder")).toBeTruthy();
+      expect(el.shadowRoot!.querySelector(".olympos-placeholder")).toBeNull();
+      expect(el.shadowRoot!.querySelector("ha-card")).toBeTruthy();
       expect(el.shadowRoot!.querySelector("style")!.textContent).toContain("#00AE42");
     });
   }

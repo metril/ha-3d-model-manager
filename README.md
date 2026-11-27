@@ -93,6 +93,33 @@ theme:
 
 The full variable and key reference is in [docs/theming.md](docs/theming.md).
 
+## Olympos cards
+
+A second, dark-first set built for pop-up dashboards. They use the same entities as the cards above and can sit alongside them.
+
+| Card | Type | What it shows |
+| --- | --- | --- |
+| Olympos printer | `custom:tdmm-olympos-printer-card` | Pop-up content: status chips, hero with progress, camera, value tiles, AMS spools, Pause/Resume and Stop. Charts and Device screens open from the header. Uses two columns at 700px and wider. |
+| Olympos tile | `custom:tdmm-olympos-tile-card` | A home-grid tile (`variant: compact` or `wide`). Tapping it goes to `#printer` by default; set `tap_action` to change that. |
+| Olympos AMS | `custom:tdmm-olympos-ams-card` | Each AMS unit with humidity, temperature and spools. Tap a spool for its details. |
+
+```yaml
+type: custom:tdmm-olympos-printer-card
+device_id: <printer device id>
+theme:
+  palette: vivid   # home (default), vivid or mocha
+  accent: "#00AE42"
+```
+
+How the controls behave:
+- **Stop:** hold for 1.5 s, then tap **Confirm stop**. The card says how much printing would be lost.
+- **Speed:** on the Device screen. It's locked while a print is running or paused.
+- **Paused:** the card shows how long the print has been paused.
+
+These gates exist only in the card. The button entities still act immediately when automations or other dashboards press them.
+
+The camera streams only while it's on screen and the page is visible; tap it to enlarge it. The frame-age chip is ready for a `frame_timestamp` attribute on the camera entity, which 3D Model Manager doesn't send yet. Until it does, the chip shows "Live". Charts load history only when that screen is opened.
+
 ## Releasing
 
 1. Bump `version` in `custom_components/tdmm/manifest.json`.
