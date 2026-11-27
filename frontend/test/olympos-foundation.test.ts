@@ -81,7 +81,7 @@ describe("olympos cards render with preset", () => {
       await el.updateComplete;
       expect(el.shadowRoot!.querySelector(".olympos-placeholder")).toBeNull();
       expect(el.shadowRoot!.querySelector("ha-card")).toBeTruthy();
-      expect(el.shadowRoot!.querySelector("style")!.textContent).toContain("#00AE42");
+      expect(el.style.getPropertyValue("--_tdmm-accent")).toContain("#00AE42");
     });
   }
 });

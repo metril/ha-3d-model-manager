@@ -1,4 +1,4 @@
-import { html, nothing, svg, type TemplateResult } from "lit";
+import { css, html, nothing, svg, type TemplateResult } from "lit";
 import { isAvailable } from "../../blocks/format.ts";
 import { isBlank, isEmptyColor, parseColor } from "../../blocks/filament.ts";
 import type { AmsUnitEntities, OlymposCtx, RenderSpools, SpoolSel } from "../contracts.ts";
@@ -88,7 +88,7 @@ export function spoolSvg(color: string | undefined): TemplateResult {
     : svg`<svg width="44" height="30" viewBox="0 0 44 30" aria-hidden="true"><rect x="0" y="0" width="5" height="30" rx="2" fill="#39414e"/><rect x="39" y="0" width="5" height="30" rx="2" fill="#39414e"/><rect x="5" y="3" width="34" height="24" fill="${color}" stroke="rgba(255,255,255,.2)"/><path d="M5 9h34M5 15h34M5 21h34" stroke="rgba(0,0,0,.16)"/></svg>`;
 }
 
-const CSS = `
+export const spoolStyles = css`
 .olp-spools{display:flex;align-items:flex-start;flex-wrap:wrap;gap:0}
 .olp-spool{min-width:52px;min-height:64px;padding:6px 4px 4px;border:0;border-radius:14px;background:transparent;color:var(--_tdmm-text-secondary);display:flex;flex-direction:column;align-items:center;gap:4px;font:500 11px var(--_tdmm-font-family,Roboto,sans-serif);cursor:pointer}
 .olp-spool[aria-pressed="true"]{background:var(--_tdmm-surface-3)}
@@ -124,14 +124,12 @@ export const renderDetail = (infos: readonly SpoolInfo[], selected: SpoolSel | u
   return html`<div class="olp-detail" aria-live="polite">${cur?.detail ?? ""}</div>`;
 };
 
-export const spoolStyle = (): TemplateResult => html`<style>${CSS}</style>`;
-
 /** Spool rows for every unit (external spool after the last) plus one shared detail line. */
 export const renderSpools: RenderSpools = (ctx, units, selected, onPick) => {
   const all = spoolInfos(ctx, units);
   const ext = externalInfo(ctx);
   const detailPool = ext ? [...all, ext] : all;
-  return html`${spoolStyle()}<div class="olp-spools-wrap">
+  return html`<div class="olp-spools-wrap">
     ${units.map((u, n) => renderSpoolRow(ctx, all.filter((i) => i.sel !== "ext" && i.sel.unit === u.unit), selected, onPick, n === units.length - 1 ? ext : undefined))}
     ${units.length === 0 && ext ? renderSpoolRow(ctx, [], selected, onPick, ext) : nothing}
     ${renderDetail(detailPool, selected)}

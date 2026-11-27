@@ -14,7 +14,9 @@ import { pausedSeconds } from "../logic/paused.ts";
 import { controlStyles } from "../ui/control-bar.ts";
 import { headerStyles } from "../ui/header.ts";
 import { heroStyles } from "../ui/hero.ts";
+import { spoolStyles } from "../ui/spools.ts";
 import { tilesStyles } from "../ui/tiles.ts";
+import { viewStyles } from "../ui/views.ts";
 import { renderChartsView } from "./charts-view.ts";
 import { renderDeviceView } from "./device-view.ts";
 import { mainStyles, renderMainView } from "./main-view.ts";
@@ -43,13 +45,14 @@ export class TdmmOlymposPrinterCard extends TdmmOlymposBase {
   static get styles(): CSSResultGroup {
     return [
       ...(super.styles as CSSResultGroup[]),
-      headerStyles, heroStyles, tilesStyles, controlStyles, mainStyles,
+      headerStyles, heroStyles, tilesStyles, controlStyles, mainStyles, spoolStyles, viewStyles,
       css`:host { container-type: normal; } ha-card { background: var(--_tdmm-surface-1); }`,
     ];
   }
 
   connectedCallback(): void {
     super.connectedCallback();
+    this.requestUpdate(); // restart paused ticker (willUpdate) after reconnect
     if (typeof ResizeObserver !== "undefined") {
       this.ro = new ResizeObserver((es) => { const w = es[0]?.contentRect.width ?? this.clientWidth; this.wide = w >= WIDE_PX; });
       this.ro.observe(this);
@@ -63,6 +66,7 @@ export class TdmmOlymposPrinterCard extends TdmmOlymposBase {
     this.stopPausedTick();
     this.stopHold();
     this.leaveCharts();
+    this.view = "main";
   }
 
   private onBack = (): void => { this.setView("main"); };
@@ -117,7 +121,7 @@ export class TdmmOlymposPrinterCard extends TdmmOlymposBase {
     if (this.hold.kind !== "armed") { clearTimeout(this.armTimer); this.armTimer = undefined; }
   }
   private frame = (): void => {
-    if (this.hold.kind === "holding") this.send("tick");
+    if (this.hold.kind === "holding") { this.send("tick"); this.requestUpdate(); } // fill is derived from ctx.now each render
     if (this.hold.kind !== "holding") { clearInterval(this.holdTimer); this.holdTimer = undefined; }
   };
   private stopHold(): void {
@@ -139,6 +143,14 @@ export class TdmmOlymposPrinterCard extends TdmmOlymposBase {
     const phase = this.buildCtx().phase;
     if (phase === "paused") this.startPausedTick(); else this.stopPausedTick();
     if (!isActive(phase) && this.hold.kind !== "idle") this.stopHold();
+  }
+
+  private wasArmed = false;
+  protected updated(): void {
+    super.updated();
+    const armed = this.hold.kind === "armed";
+    if (armed && !this.wasArmed) this.renderRoot.querySelector<HTMLElement>(".o-ctl-row.two .o-btn")?.focus();
+    this.wasArmed = armed;
   }
 
   protected renderCard(ctx: OlymposCtx): TemplateResult {

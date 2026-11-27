@@ -7,7 +7,7 @@ import type { HomeAssistant } from "../../ha-types.ts";
 import { TdmmOlymposBase } from "../base.ts";
 import type { OlymposCtx, SpoolSel } from "../contracts.ts";
 import { AMS_KEYS } from "../keys.ts";
-import { externalInfo, renderDetail, renderSpoolRow, spoolInfos, spoolStyle } from "../ui/spools.ts";
+import { externalInfo, renderDetail, renderSpoolRow, spoolInfos, spoolStyles } from "../ui/spools.ts";
 
 export class TdmmOlymposAmsCard extends TdmmOlymposBase {
   protected usesAms = true;
@@ -16,6 +16,7 @@ export class TdmmOlymposAmsCard extends TdmmOlymposBase {
   static get styles(): CSSResultGroup {
     return [
       ...(super.styles as CSSResultGroup[]),
+      spoolStyles,
       css`
         .olp-ams { padding: 12px; display: flex; flex-direction: column; gap: 8px; color: var(--_tdmm-text); font-family: var(--_tdmm-font-family); }
         .olp-unit-head { display: flex; align-items: center; gap: 8px; padding: 0 4px; font-size: 13px; font-weight: 600; }
@@ -37,7 +38,7 @@ export class TdmmOlymposAmsCard extends TdmmOlymposBase {
     const ext = externalInfo(ctx);
     const st = (id?: string) => (id ? ctx.hass.states[id] : undefined);
     const pool = ext ? [...infos, ext] : infos;
-    return html`<ha-card>${spoolStyle()}<div class="olp-ams">
+    return html`<ha-card><div class="olp-ams">
       ${units.length === 0 && !ext ? html`<div class="olp-empty">No AMS found</div>` : nothing}
       ${units.map((u, n) => html`<div class="olp-unit">
         <div class="olp-unit-head"><span class="grow">AMS ${u.unit}</span>

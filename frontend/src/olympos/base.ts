@@ -1,4 +1,4 @@
-import { css, html, nothing, type CSSResultGroup, type TemplateResult } from "lit";
+import { css, html, nothing, unsafeCSS, type CSSResultGroup, type PropertyValues, type TemplateResult } from "lit";
 import { TdmmBaseCard } from "../base/tdmm-base-card.ts";
 import type { BlockEntry } from "../config.ts";
 import type { EntityKey } from "../entities.ts";
@@ -20,12 +20,27 @@ export abstract class TdmmOlymposBase extends TdmmBaseCard {
 
   static get styles(): CSSResultGroup {
     return [
-      ...(super.styles as CSSResultGroup[]),
+      unsafeCSS(tokenCss()),
       css`
-        :host { color-scheme: dark; }
-        ha-card { padding: 0; overflow: hidden; background: var(--_tdmm-surface-2); }
+        :host { display: block; color-scheme: dark; }
+        ha-card {
+          box-sizing: border-box; padding: 0; overflow: hidden; background: var(--_tdmm-surface-2);
+          border-radius: var(--_tdmm-radius); color: var(--_tdmm-text);
+          font-family: var(--_tdmm-font-family); font-size: var(--_tdmm-font-size);
+        }
       `,
     ];
+  }
+
+  private _palette?: string;
+
+  protected willUpdate(c: PropertyValues): void {
+    super.willUpdate(c);
+    const name = this.config?.theme.palette ?? "";
+    if (name === this._palette) return;
+    this._palette = name;
+    const preset = presetVars(name);
+    for (const t of OLYMPOS_TOKENS) this.style.setProperty(`--_tdmm-${t}`, `var(--tdmm-${t}, ${preset[t]})`);
   }
 
   protected visibleBlocks(): BlockEntry[] {
@@ -80,8 +95,6 @@ export abstract class TdmmOlymposBase extends TdmmBaseCard {
     if (!this.config || !this.hass) return nothing;
     if (!this.config.device_id) return this.renderPlaceholder();
     if (!this.resolved.deviceFound) return html`<ha-card>${this.renderNotFound()}</ha-card>`;
-    const preset = presetVars(this.config.theme.palette);
-    const vars = Object.fromEntries(OLYMPOS_TOKENS.map((t) => [t, preset[t]]));
-    return html`<style>${tokenCss(vars)}</style>${this.renderCard(this.buildCtx())}`;
+    return this.renderCard(this.buildCtx());
   }
 }

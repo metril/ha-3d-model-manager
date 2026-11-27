@@ -31,7 +31,7 @@ export class TdmmOlymposCamera extends LitElement {
   mode: CameraMode = "live";
   lightOff = false;
   private ready = false;
-  private inView = true;
+  private inView = typeof IntersectionObserver === "undefined";
   private docVisible = true;
   private enlarged = false;
   private _tick = 0;

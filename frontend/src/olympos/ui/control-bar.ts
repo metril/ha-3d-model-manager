@@ -59,7 +59,7 @@ export const controlStyles = css`
   .o-ctl.off { opacity: 0.4; }
   .o-ctl-row { display: grid; grid-template-columns: minmax(0, 1fr) 48px; gap: 8px; }
   .o-ctl-row.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .o-btn { position: relative; overflow: hidden; border: 0; margin: 0; cursor: pointer; height: 48px; min-width: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font: 600 13px/16px inherit; font-family: inherit; background: var(--_tdmm-chip-bg); color: var(--_tdmm-text); }
+  .o-btn { position: relative; overflow: hidden; border: 0; margin: 0; cursor: pointer; height: 48px; min-width: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; font-size: 13px; line-height: 16px; font-family: inherit; background: var(--_tdmm-chip-bg); color: var(--_tdmm-text); }
   .o-btn.pause { background: color-mix(in srgb, var(--_tdmm-accent) 16%, transparent); color: var(--_tdmm-accent); }
   .o-btn.stop { touch-action: none; user-select: none; -webkit-user-select: none; color: var(--_tdmm-fault); background: color-mix(in srgb, var(--_tdmm-fault) 16%, transparent); }
   .o-btn.danger { background: var(--_tdmm-fault); color: var(--_tdmm-deep); }
