@@ -6,20 +6,20 @@ export type BlockType =
 export interface BlockEntry { type: BlockType; hidden?: boolean }
 export type TabId = "status" | "control" | "filament";
 export type CardKind =
-  | "printer" | "progress" | "ams" | "camera" | "olympos-printer" | "olympos-tile" | "olympos-ams";
+  | "printer" | "progress" | "ams" | "camera" | "printer-popup" | "printer-tile" | "spools";
 export type TapAction = { action: string; [k: string]: unknown };
 export type TileVariant = "compact" | "wide";
-const OLYMPOS_KINDS: readonly CardKind[] = ["olympos-printer", "olympos-tile", "olympos-ams"];
-export const isOlympos = (k: CardKind): boolean => OLYMPOS_KINDS.includes(k);
+const DARK_KINDS: readonly CardKind[] = ["printer-popup", "printer-tile", "spools"];
+export const isDark = (k: CardKind): boolean => DARK_KINDS.includes(k);
 
 export const CARD_TYPES: Record<CardKind, string> = {
   printer: "custom:tdmm-printer-card",
   progress: "custom:tdmm-progress-card",
   ams: "custom:tdmm-ams-card",
   camera: "custom:tdmm-camera-card",
-  "olympos-printer": "custom:tdmm-olympos-printer-card",
-  "olympos-tile": "custom:tdmm-olympos-tile-card",
-  "olympos-ams": "custom:tdmm-olympos-ams-card",
+  "printer-popup": "custom:tdmm-printer-popup-card",
+  "printer-tile": "custom:tdmm-printer-tile-card",
+  "spools": "custom:tdmm-spools-card",
 };
 
 export interface TdmmCardConfig {
@@ -62,7 +62,7 @@ export const CARD_DEFAULTS = {
     progress: entries("header", "progress", "job"),
     ams: entries("ams", "ext"),
     camera: entries("camera", "progress"),
-    "olympos-printer": [], "olympos-tile": [], "olympos-ams": [],
+    "printer-popup": [], "printer-tile": [], "spools": [],
   } as Record<CardKind, BlockEntry[]>,
   default_tab: "status" as TabId,
   hide_tabs: [] as TabId[],
@@ -71,7 +71,7 @@ export const CARD_DEFAULTS = {
   /** Default tile tap: open the bubble-card pop-up with hash `#printer`. */
   tap_action: { action: "navigate", navigation_path: "#printer" } as TapAction,
   theme: {} as ThemeConfig,
-  olympos_theme: { preset: "olympos", palette: "home" } as Record<string, unknown>,
+  dark_theme: { preset: "dark", palette: "default" } as Record<string, unknown>,
   // theme-level defaults dropped by the serializer
   theme_keys: { density: "normal", icon_set: "default" } as Record<string, unknown>,
 };
@@ -131,9 +131,9 @@ export function normalizeConfig(raw: unknown): NormalizedConfig {
   const default_tab = TAB_IDS.includes(r.default_tab as TabId) ? (r.default_tab as TabId) : CARD_DEFAULTS.default_tab;
   const camera_view = r.camera_view === "live" ? "live" : "auto";
   const theme: ThemeConfig = isObj(r.theme) ? { ...(r.theme as ThemeConfig) } : {};
-  if (isOlympos(kind)) {
-    theme.preset = "olympos";
-    if (!["home", "vivid", "mocha"].includes(theme.palette as string)) theme.palette = "home";
+  if (isDark(kind)) {
+    theme.preset = "dark";
+    if (!["default", "vivid", "mocha"].includes(theme.palette as string)) theme.palette = "default";
   }
   const variant: TileVariant = r.variant === "wide" ? "wide" : "compact";
   const name = typeof r.name === "string" && r.name !== "" ? r.name : undefined;
@@ -161,21 +161,21 @@ export function serializeConfig(cfg: NormalizedConfig): TdmmCardConfig {
     if (Object.keys(tabs).length) out.tabs = tabs;
     if (cfg.hide_tabs.length) out.hide_tabs = [...cfg.hide_tabs];
     if (cfg.default_tab !== CARD_DEFAULTS.default_tab) out.default_tab = cfg.default_tab;
-  } else if (!isOlympos(cfg.kind)) {
+  } else if (!isDark(cfg.kind)) {
     const l = serList(cfg.blocks);
     if (!deepEqual(l, CARD_DEFAULTS.blocks[cfg.kind])) out.blocks = l;
   }
   if (cfg.kind === "camera" && cfg.camera_view !== CARD_DEFAULTS.camera_view) out.camera_view = cfg.camera_view;
-  if (cfg.kind === "olympos-tile") {
+  if (cfg.kind === "printer-tile") {
     if (cfg.variant !== CARD_DEFAULTS.variant) out.variant = cfg.variant;
     if (cfg.name) out.name = cfg.name;
     if (!deepEqual(cfg.tap_action, CARD_DEFAULTS.tap_action)) out.tap_action = cfg.tap_action;
   }
   const theme: Record<string, unknown> = {};
-  const olympos = isOlympos(cfg.kind);
+  const dark = isDark(cfg.kind);
   for (const [k, v] of Object.entries(cfg.theme)) {
     if (v === undefined || v === "") continue;
-    if (olympos && k in CARD_DEFAULTS.olympos_theme && deepEqual(v, CARD_DEFAULTS.olympos_theme[k])) continue;
+    if (dark && k in CARD_DEFAULTS.dark_theme && deepEqual(v, CARD_DEFAULTS.dark_theme[k])) continue;
     if (k in CARD_DEFAULTS.theme_keys && deepEqual(v, CARD_DEFAULTS.theme_keys[k])) continue;
     theme[k] = v;
   }

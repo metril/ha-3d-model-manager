@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing, type TemplateResult } from "lit";
 import {
-  CARD_DEFAULTS, isOlympos, normalizeConfig, serializeConfig,
+  CARD_DEFAULTS, isDark, normalizeConfig, serializeConfig,
   type BlockEntry, type NormalizedConfig, type TabId, type TdmmCardConfig,
 } from "../config.ts";
 import type { HomeAssistant } from "../ha-types.ts";
@@ -100,7 +100,7 @@ export class TdmmCardEditor extends LitElement {
       if (TABS.includes(v.default_tab as TabId)) next.default_tab = v.default_tab as TabId;
       next.hide_tabs = Array.isArray(v.hide_tabs) ? v.hide_tabs.filter((t): t is TabId => TABS.includes(t as TabId)) : [];
     }
-    if (c.kind === "olympos-tile") {
+    if (c.kind === "printer-tile") {
       next.variant = v.variant === "wide" ? "wide" : "compact";
       next.name = typeof v.name === "string" && v.name !== "" ? v.name : undefined;
       next.tap_action = typeof v.tap_action === "object" && v.tap_action !== null && typeof (v.tap_action as { action?: unknown }).action === "string"
@@ -133,7 +133,7 @@ export class TdmmCardEditor extends LitElement {
       variant: c.variant,
       name: c.name ?? "",
       tap_action: c.tap_action,
-      theme: { density: CARD_DEFAULTS.theme_keys.density, icon_set: CARD_DEFAULTS.theme_keys.icon_set, ...(isOlympos(c.kind) ? CARD_DEFAULTS.olympos_theme : {}), ...this._formTheme },
+      theme: { density: CARD_DEFAULTS.theme_keys.density, icon_set: CARD_DEFAULTS.theme_keys.icon_set, ...(isDark(c.kind) ? CARD_DEFAULTS.dark_theme : {}), ...this._formTheme },
     };
     const printer = c.kind === "printer";
     return html`
@@ -142,7 +142,7 @@ export class TdmmCardEditor extends LitElement {
         @value-changed=${(e: CustomEvent<{ value: Record<string, unknown> }>) => this.onForm(e)}></ha-form>
       ${printer ? html`<div class="tabs">${TABS.map((t) => html`
         <button class="tab ${t === this._tab ? "active" : ""}" @click=${() => { this._tab = t; }}>${t[0]!.toUpperCase() + t.slice(1)}</button>`)}</div>` : nothing}
-      ${isOlympos(c.kind) ? nothing : html`<tdmm-block-list .hass=${this.hass} .blocks=${printer ? c.tabs[this._tab] : c.blocks}
+      ${isDark(c.kind) ? nothing : html`<tdmm-block-list .hass=${this.hass} .blocks=${printer ? c.tabs[this._tab] : c.blocks}
         @blocks-changed=${(e: CustomEvent<{ blocks: BlockEntry[] }>) => this.onBlocks(e)}></tdmm-block-list>`}`;
   }
 }

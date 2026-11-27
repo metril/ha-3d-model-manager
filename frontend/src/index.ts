@@ -3,9 +3,9 @@ import { TdmmProgressCard } from "./cards/progress/tdmm-progress-card.ts";
 import { TdmmPrinterCard } from "./cards/printer/tdmm-printer-card.ts";
 import { TdmmAmsCard } from "./cards/ams/tdmm-ams-card.ts";
 import { TdmmCameraCard } from "./cards/camera/tdmm-camera-card.ts";
-import { TdmmOlymposPrinterCard } from "./olympos/printer/tdmm-olympos-printer-card.ts";
-import { TdmmOlymposTileCard } from "./olympos/tile/tdmm-olympos-tile-card.ts";
-import { TdmmOlymposAmsCard } from "./olympos/ams/tdmm-olympos-ams-card.ts";
+import { TdmmPrinterPopupCard } from "./dark/printer/tdmm-printer-popup-card.ts";
+import { TdmmPrinterTileCard } from "./dark/tile/tdmm-printer-tile-card.ts";
+import { TdmmSpoolsCard } from "./dark/ams/tdmm-spools-card.ts";
 import { TDMM_VERSION, defineOnce, registerCard } from "./register.ts";
 import { TdmmCardEditor } from "./editor/tdmm-card-editor.ts";
 import { TdmmBlockList } from "./editor/tdmm-block-list.ts";
@@ -19,24 +19,24 @@ defineOnce("tdmm-progress-card", TdmmProgressCard);
 defineOnce("tdmm-printer-card", TdmmPrinterCard);
 defineOnce("tdmm-ams-card", TdmmAmsCard);
 defineOnce("tdmm-camera-card", TdmmCameraCard);
-defineOnce("tdmm-olympos-printer-card", TdmmOlymposPrinterCard);
-defineOnce("tdmm-olympos-tile-card", TdmmOlymposTileCard);
-defineOnce("tdmm-olympos-ams-card", TdmmOlymposAmsCard);
+defineOnce("tdmm-printer-popup-card", TdmmPrinterPopupCard);
+defineOnce("tdmm-printer-tile-card", TdmmPrinterTileCard);
+defineOnce("tdmm-spools-card", TdmmSpoolsCard);
 registerCard({
-  type: "custom:tdmm-olympos-printer-card",
-  name: "3DMM Olympos Printer",
+  type: "custom:tdmm-printer-popup-card",
+  name: "3DMM Printer Pop-up",
   description: "Full printer card with camera, controls, charts and filament",
   preview: true,
 });
 registerCard({
-  type: "custom:tdmm-olympos-tile-card",
-  name: "3DMM Olympos Tile",
+  type: "custom:tdmm-printer-tile-card",
+  name: "3DMM Printer Tile",
   description: "Compact or wide printer tile",
   preview: true,
 });
 registerCard({
-  type: "custom:tdmm-olympos-ams-card",
-  name: "3DMM Olympos AMS",
+  type: "custom:tdmm-spools-card",
+  name: "3DMM Spools",
   description: "AMS spools with detail line",
 });
 registerCard({

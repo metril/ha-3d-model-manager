@@ -26,14 +26,14 @@ Every token defaults to a Home Assistant variable, so cards follow light and dar
 | `--tdmm-font-family` | `var(--ha-font-family-body, inherit)` | Font family. |
 | `--tdmm-font-size` | `var(--ha-font-size-m, 14px)` | Base font size. |
 | `--tdmm-icon-size` | `24px` | Icon size. |
-| `--tdmm-surface-0` | `var(--primary-background-color)` | Olympos cards: page-level surface. |
-| `--tdmm-surface-1` | `var(--card-background-color)` | Olympos cards: sheet surface. |
-| `--tdmm-surface-2` | `var(--secondary-background-color)` | Olympos cards: raised card surface. |
-| `--tdmm-surface-3` | `var(--divider-color)` | Olympos cards: wells and inset areas. |
-| `--tdmm-deep` | `var(--primary-background-color)` | Olympos cards: deepest background (camera, overlays). |
+| `--tdmm-surface-0` | `var(--primary-background-color)` | Dark cards: page-level surface. |
+| `--tdmm-surface-1` | `var(--card-background-color)` | Dark cards: sheet surface. |
+| `--tdmm-surface-2` | `var(--secondary-background-color)` | Dark cards: raised card surface. |
+| `--tdmm-surface-3` | `var(--divider-color)` | Dark cards: wells and inset areas. |
+| `--tdmm-deep` | `var(--primary-background-color)` | Dark cards: deepest background (camera, overlays). |
 | `--tdmm-warn` | `var(--warning-color)` | Warning color (paused, low filament). |
 | `--tdmm-fault` | `var(--error-color)` | Fault color (failed, alerts). |
-| `--tdmm-tile-accent` | `var(--orange-color, var(--warning-color))` | Olympos tile card identity color. |
+| `--tdmm-tile-accent` | `var(--orange-color, var(--warning-color))` | Printer tile card identity color. |
 
 ## Home Assistant theme example
 

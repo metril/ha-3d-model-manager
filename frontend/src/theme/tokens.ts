@@ -23,14 +23,14 @@ export const TOKENS: readonly TokenDef[] = [
   { name: "font-family", fallback: "var(--ha-font-family-body, inherit)", description: "Font family.", kind: "font" },
   { name: "font-size", fallback: "var(--ha-font-size-m, 14px)", description: "Base font size.", kind: "length" },
   { name: "icon-size", fallback: "24px", description: "Icon size.", kind: "length" },
-  { name: "surface-0", fallback: "var(--primary-background-color)", description: "Olympos cards: page-level surface.", kind: "color" },
-  { name: "surface-1", fallback: "var(--card-background-color)", description: "Olympos cards: sheet surface.", kind: "color" },
-  { name: "surface-2", fallback: "var(--secondary-background-color)", description: "Olympos cards: raised card surface.", kind: "color" },
-  { name: "surface-3", fallback: "var(--divider-color)", description: "Olympos cards: wells and inset areas.", kind: "color" },
-  { name: "deep", fallback: "var(--primary-background-color)", description: "Olympos cards: deepest background (camera, overlays).", kind: "color" },
+  { name: "surface-0", fallback: "var(--primary-background-color)", description: "Dark cards: page-level surface.", kind: "color" },
+  { name: "surface-1", fallback: "var(--card-background-color)", description: "Dark cards: sheet surface.", kind: "color" },
+  { name: "surface-2", fallback: "var(--secondary-background-color)", description: "Dark cards: raised card surface.", kind: "color" },
+  { name: "surface-3", fallback: "var(--divider-color)", description: "Dark cards: wells and inset areas.", kind: "color" },
+  { name: "deep", fallback: "var(--primary-background-color)", description: "Dark cards: deepest background (camera, overlays).", kind: "color" },
   { name: "warn", fallback: "var(--warning-color)", description: "Warning color (paused, low filament).", kind: "color" },
   { name: "fault", fallback: "var(--error-color)", description: "Fault color (failed, alerts).", kind: "color" },
-  { name: "tile-accent", fallback: "var(--orange-color, var(--warning-color))", description: "Olympos tile card identity color.", kind: "color" },
+  { name: "tile-accent", fallback: "var(--orange-color, var(--warning-color))", description: "Printer tile card identity color.", kind: "color" },
 ];
 
 /** `preset` values replace the HA fallbacks (chain: card theme var, user `--tdmm-*`, preset, HA fallback). */
@@ -103,8 +103,8 @@ export interface ThemeConfig {
   icon_size?: number;
   density?: Density;
   icon_set?: IconSet;
-  preset?: "olympos";
-  palette?: "home" | "vivid" | "mocha";
+  preset?: "dark";
+  palette?: "default" | "vivid" | "mocha";
   warn?: string;
   fault?: string;
   tile_accent?: string;
