@@ -1,6 +1,7 @@
 export type TokenName =
   | "accent" | "progress" | "text" | "text-secondary" | "bg" | "on-accent" | "chip-bg"
-  | "radius" | "gap" | "font-family" | "font-size" | "icon-size";
+  | "radius" | "gap" | "font-family" | "font-size" | "icon-size"
+  | "surface-0" | "surface-1" | "surface-2" | "surface-3" | "deep" | "warn" | "fault" | "tile-accent";
 
 export interface TokenDef {
   name: TokenName;
@@ -22,10 +23,19 @@ export const TOKENS: readonly TokenDef[] = [
   { name: "font-family", fallback: "var(--ha-font-family-body, inherit)", description: "Font family.", kind: "font" },
   { name: "font-size", fallback: "var(--ha-font-size-m, 14px)", description: "Base font size.", kind: "length" },
   { name: "icon-size", fallback: "24px", description: "Icon size.", kind: "length" },
+  { name: "surface-0", fallback: "var(--primary-background-color)", description: "Olympos cards: page-level surface.", kind: "color" },
+  { name: "surface-1", fallback: "var(--card-background-color)", description: "Olympos cards: sheet surface.", kind: "color" },
+  { name: "surface-2", fallback: "var(--secondary-background-color)", description: "Olympos cards: raised card surface.", kind: "color" },
+  { name: "surface-3", fallback: "var(--divider-color)", description: "Olympos cards: wells and inset areas.", kind: "color" },
+  { name: "deep", fallback: "var(--primary-background-color)", description: "Olympos cards: deepest background (camera, overlays).", kind: "color" },
+  { name: "warn", fallback: "var(--warning-color)", description: "Warning color (paused, low filament).", kind: "color" },
+  { name: "fault", fallback: "var(--error-color)", description: "Fault color (failed, alerts).", kind: "color" },
+  { name: "tile-accent", fallback: "var(--orange-color, var(--warning-color))", description: "Olympos tile card identity color.", kind: "color" },
 ];
 
-export function tokenCss(): string {
-  return `:host{${TOKENS.map((t) => `--_tdmm-${t.name}: var(--tdmm-${t.name}, ${t.fallback});`).join("")}}`;
+/** `preset` values replace the HA fallbacks (chain: card theme var, user `--tdmm-*`, preset, HA fallback). */
+export function tokenCss(preset?: Partial<Record<TokenName, string>>): string {
+  return `:host{${TOKENS.map((t) => `--_tdmm-${t.name}: var(--tdmm-${t.name}, ${preset?.[t.name] ?? t.fallback});`).join("")}}`;
 }
 
 function luminance([r, g, b]: [number, number, number]): number {
@@ -93,6 +103,11 @@ export interface ThemeConfig {
   icon_size?: number;
   density?: Density;
   icon_set?: IconSet;
+  preset?: "olympos";
+  palette?: "home" | "vivid" | "mocha";
+  warn?: string;
+  fault?: string;
+  tile_accent?: string;
 }
 
 export function themeStyleVars(theme: ThemeConfig | undefined): Record<string, string> {
@@ -106,6 +121,9 @@ export function themeStyleVars(theme: ThemeConfig | undefined): Record<string, s
   str("text-secondary", theme.text_secondary);
   str("bg", theme.bg);
   str("on-accent", theme.on_accent);
+  str("warn", theme.warn);
+  str("fault", theme.fault);
+  str("tile-accent", theme.tile_accent);
   str("chip-bg", theme.chip_bg);
   px("radius", theme.radius);
   str("font-family", theme.font_family);
@@ -120,7 +138,7 @@ export function renderThemingMarkdown(): string {
   const yamlLines = TOKENS.filter((t) => t.kind === "color").map((t) => `      --tdmm-${t.name}: "#ff6600"`);
   const keys = [
     "accent", "progress", "text", "text_secondary", "bg", "on_accent", "chip_bg", "radius", "font_family",
-    "font_size", "icon_size", "density", "icon_set",
+    "font_size", "icon_size", "density", "icon_set", "preset", "palette", "warn", "fault", "tile_accent",
   ].map((k) => `- \`${k}\``).join("\n");
   const dens = (Object.keys(DENSITY_GAP) as Density[]).map((d) => `| \`${d}\` | \`${DENSITY_GAP[d]}\` |`).join("\n");
   const icons = (Object.keys(ICON_SETS.default) as IconName[])

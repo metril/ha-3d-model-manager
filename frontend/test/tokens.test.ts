@@ -8,8 +8,8 @@ describe("tokens", () => {
     const css = tokenCss();
     expect(css).toContain("--_tdmm-accent: var(--tdmm-accent, var(--primary-color))");
     expect(css).toContain("--_tdmm-bg: var(--tdmm-bg, var(--ha-card-background, var(--card-background-color)))");
-    expect(TOKENS.length).toBe(12);
-    expect((css.match(/--_tdmm-[a-z-]+:/g) ?? []).length).toBe(12);
+    expect(TOKENS.length).toBe(20);
+    expect((css.match(/--_tdmm-[a-z0-9-]+:/g) ?? []).length).toBe(20);
   });
 
   it("no literal colors", () => {
