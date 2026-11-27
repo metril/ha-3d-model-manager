@@ -27,6 +27,7 @@ export interface HomeAssistant {
   devices: Record<string, DeviceRegistryEntry>;
   locale: { language: string };
   themes: { darkMode: boolean };
+  selectedTheme?: { theme?: string } | null;
   callService(domain: string, service: string, data?: Record<string, unknown>): Promise<unknown>;
   localize?(key: string): string;
   formatEntityState?(stateObj: HassEntity, state?: string): string;

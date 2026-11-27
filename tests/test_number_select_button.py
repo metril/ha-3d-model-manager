@@ -84,7 +84,8 @@ async def test_buttons_hit_paths(
     hass: HomeAssistant, fake_tdmm: FakeTdmm, key: str, path: str, body: dict | None
 ) -> None:
     await _setup(hass, fake_tdmm)
-    await hass.services.async_call("button", "press", {"entity_id": f"button.a1_{key}"}, blocking=True)
+    eid = "dismiss_alert" if key == "clear_hms" else key  # entity_id derives from the display name
+    await hass.services.async_call("button", "press", {"entity_id": f"button.a1_{eid}"}, blocking=True)
     posts = [r for r in fake_tdmm.request_log if r.method == "POST"]
     assert [r.path for r in posts] == [BASE + path]
     if body is not None:

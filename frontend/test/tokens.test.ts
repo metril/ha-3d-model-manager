@@ -1,15 +1,15 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ICON_SETS, TOKENS, renderThemingMarkdown, themeStyleVars, tokenCss } from "../src/theme/tokens.ts";
+import { ICON_SETS, TOKENS, parseColor, pickOnAccent, renderThemingMarkdown, themeStyleVars, tokenCss } from "../src/theme/tokens.ts";
 
 describe("tokens", () => {
   it("every token has var fallback chain", () => {
     const css = tokenCss();
     expect(css).toContain("--_tdmm-accent: var(--tdmm-accent, var(--primary-color))");
     expect(css).toContain("--_tdmm-bg: var(--tdmm-bg, var(--ha-card-background, var(--card-background-color)))");
-    expect(TOKENS.length).toBe(11);
-    expect((css.match(/--_tdmm-[a-z-]+:/g) ?? []).length).toBe(11);
+    expect(TOKENS.length).toBe(12);
+    expect((css.match(/--_tdmm-[a-z-]+:/g) ?? []).length).toBe(12);
   });
 
   it("no literal colors", () => {
@@ -23,6 +23,21 @@ describe("tokens", () => {
     expect(themeStyleVars(undefined)).toEqual({});
     expect(themeStyleVars({ density: "compact" })).toEqual({ "--tdmm-gap": "4px" });
     expect(themeStyleVars({ density: "normal" })).toEqual({});
+  });
+
+  it("pickOnAccent chooses the higher-contrast text color", () => {
+    expect(pickOnAccent("#03a9f4")).toBe("#000000");
+    expect(pickOnAccent("rgb(3, 169, 244)")).toBe("#000000");
+    expect(pickOnAccent("#ffffff")).toBe("#000000");
+    expect(pickOnAccent("#000")).toBe("#ffffff");
+    expect(pickOnAccent("#1a237e")).toBe("#ffffff");
+    expect(pickOnAccent("rgba(255, 235, 59, 0.5)")).toBe("#000000");
+    expect(pickOnAccent("var(--x)")).toBeUndefined();
+    expect(parseColor("#abc")).toEqual([170, 187, 204]);
+  });
+
+  it("on_accent theme key maps to var", () => {
+    expect(themeStyleVars({ on_accent: "#111" })).toEqual({ "--tdmm-on-accent": "#111" });
   });
 
   it("icon sets cover every IconName", () => {

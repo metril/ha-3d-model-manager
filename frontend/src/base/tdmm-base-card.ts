@@ -3,7 +3,7 @@ import { LitElement, css, html, nothing, unsafeCSS, type CSSResultGroup, type Te
 import { normalizeConfig, type BlockEntry, type NormalizedConfig } from "../config.ts";
 import { resolveEntities, type EntityKey, type ResolvedEntities } from "../entities.ts";
 import type { HomeAssistant } from "../ha-types.ts";
-import { ICON_SETS, themeStyleVars, tokenCss } from "../theme/tokens.ts";
+import { ICON_SETS, pickOnAccent, themeStyleVars, tokenCss } from "../theme/tokens.ts";
 import { blockStyles, getBlock } from "../blocks/registry.ts";
 import type { BlockContext, IconName } from "../blocks/types.ts";
 import { hassChanged } from "./diff.ts";
@@ -85,6 +85,25 @@ export abstract class TdmmBaseCard extends LitElement {
 
   getGridOptions(): { columns: number; rows?: number | "auto"; min_columns: number; min_rows?: number } {
     return { columns: 12, rows: "auto", min_columns: 6 };
+  }
+
+  protected updated(): void {
+    this.updateOnAccent();
+  }
+
+  private updateOnAccent(): void {
+    const raw = getComputedStyle(this).getPropertyValue("--_tdmm-accent").trim();
+    let pick = raw ? pickOnAccent(raw) : undefined;
+    if (!pick && raw) {
+      // named/hsl/etc: let the browser normalize to rgb()
+      const probe = document.createElement("span");
+      probe.style.color = raw;
+      this.renderRoot.appendChild(probe);
+      pick = pickOnAccent(getComputedStyle(probe).color);
+      probe.remove();
+    }
+    if (pick) { if (this.style.getPropertyValue("--tdmm-on-accent-auto") !== pick) this.style.setProperty("--tdmm-on-accent-auto", pick); }
+    else this.style.removeProperty("--tdmm-on-accent-auto");
   }
 
   protected applyTheme(): void {
