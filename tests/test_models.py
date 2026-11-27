@@ -132,3 +132,19 @@ def test_printer_info_from_printers_fixture():
     assert b.capabilities.door is True
     assert b.capabilities.chamber_temp is True
     assert PrinterInfo.from_dict({"id": 3, "name": "x"}).capabilities.camera == "none"
+
+
+def test_status_camera_state_and_paused_at_optional():
+    s = PrinterStatus.from_dict(load("status_printing.json"))
+    assert s.camera_state is None
+    assert s.paused_at is None
+    s = PrinterStatus.from_dict({"camera_state": "live", "paused_at": "2026-10-30T10:00:00Z"})
+    assert (s.camera_state, s.paused_at) == ("live", "2026-10-30T10:00:00Z")
+
+
+def test_delta_updates_camera_state_and_paused_at():
+    raw = merge_patch(load("status_printing.json"), {"camera_state": "warming", "paused_at": "2026-10-30T10:00:00Z"})
+    s = PrinterStatus.from_dict(raw)
+    assert (s.camera_state, s.paused_at) == ("warming", "2026-10-30T10:00:00Z")
+    s = PrinterStatus.from_dict(merge_patch(raw, {"camera_state": "stalled", "paused_at": None}))
+    assert (s.camera_state, s.paused_at) == ("stalled", None)

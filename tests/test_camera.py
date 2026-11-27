@@ -90,3 +90,10 @@ async def test_no_camera_entity_without_capability(hass: HomeAssistant, fake_tdm
     await _setup(hass, fake_tdmm, camera="none")
     assert hass.states.get(ENTITY) is None
     assert fake_tdmm.requests[SNAP] == 0
+
+
+async def test_camera_state_attribute_updates_via_sse(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
+    await _setup(hass, fake_tdmm)
+    assert hass.states.get(ENTITY).attributes["camera_state"] is None
+    await fake_tdmm.push("printer.delta", {"printer_id": 1, "patch": {"camera_state": "stalled"}})
+    await until(lambda: hass.states.get(ENTITY).attributes.get("camera_state") == "stalled")

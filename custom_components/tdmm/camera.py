@@ -54,6 +54,11 @@ class TdmmCamera(TdmmEntity, Camera):
         self._cache: bytes | None = None
         self._retry_until = 0.0
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None] | None:
+        data = self.coordinator.data
+        return None if data is None else {"camera_state": data.camera_state}
+
     async def async_camera_image(self, width: int | None = None, height: int | None = None) -> bytes | None:
         if time.monotonic() < self._retry_until:
             return self._cache

@@ -180,6 +180,8 @@ class PrinterStatus:
     tray_now: int | None = None
     active_tray: Tray | None = None
     print_job: PrintJob | None = None
+    camera_state: str | None = None  # 3DMM >= 0.26: off|warming|live|stalled
+    paused_at: str | None = None  # 3DMM >= 0.26: ISO UTC, only while an active job is paused
 
     @classmethod
     def from_dict(cls, d: Mapping[str, Any]) -> Self:

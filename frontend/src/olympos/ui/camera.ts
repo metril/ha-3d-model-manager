@@ -2,7 +2,7 @@ import { LitElement, css, html, nothing, type PropertyValues, type TemplateResul
 import { defineOnce } from "../../register.ts";
 import type { HassEntity, HomeAssistant } from "../../ha-types.ts";
 import type { OlymposCtx } from "../contracts.ts";
-import { frameAge } from "../logic/camera-age.ts";
+import { cameraState } from "../logic/camera-age.ts";
 import { cameraMode, type CameraMode } from "../logic/gating.ts";
 
 export const START_CAP_MS = 10_000;
@@ -11,12 +11,12 @@ const AGE_TICK_MS = 5_000;
 export interface CameraChip { label: string; tone: "live" | "warn" | "stall" | "muted"; }
 
 /** Pure chip decision for the camera overlay. */
-export function cameraChip(mode: CameraMode, starting: boolean, ts: unknown, now: number): CameraChip {
+export function cameraChip(mode: CameraMode, starting: boolean, state: unknown): CameraChip {
   if (mode === "last") return { label: "Last frame", tone: "muted" };
-  if (starting) return { label: "Camera starting…", tone: "muted" };
-  const a = frameAge(ts, now);
-  if (a.kind === "lag") return { label: `${a.sec} s old`, tone: "warn" };
-  if (a.kind === "stall") return { label: `Stalled · ${a.min} min`, tone: "stall" };
+  const s = cameraState(state);
+  if (s === "stalled") return { label: "Stalled", tone: "stall" };
+  if (s === "warming") return { label: "Camera starting…", tone: "muted" };
+  if (s === "unknown" && starting) return { label: "Camera starting…", tone: "muted" };
   return { label: "Live", tone: "live" };
 }
 
@@ -89,7 +89,7 @@ export class TdmmOlymposCamera extends LitElement {
 
   private panel(big: boolean): TemplateResult {
     const starting = this.mode === "live" && this.streaming && !this.ready;
-    const chip = cameraChip(this.mode, starting, this.entity?.attributes.frame_timestamp, Date.now());
+    const chip = cameraChip(this.mode, starting, this.entity?.attributes.camera_state);
     const media = this.media();
     return html`<div class="frame ${big ? "big" : ""}">
       <div class="media">${media === nothing ? html`<div class="ph"><ha-icon icon="mdi:camera-outline"></ha-icon></div>` : media}</div>
