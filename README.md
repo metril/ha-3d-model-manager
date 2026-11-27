@@ -24,7 +24,7 @@ Created per printer:
 - Fan: part fan, aux fan, chamber fan.
 - Number: nozzle target temperature, bed target temperature.
 - Select: speed profile.
-- Button: pause, resume, stop, home, clear HMS.
+- Button: pause, resume, stop, home, dismiss alert.
 - Camera: proxied printer camera.
 - Image: print thumbnail.
 

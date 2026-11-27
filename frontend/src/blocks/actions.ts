@@ -55,7 +55,7 @@ registerBlock({
     if (has("resume") && paused) items.push(simple(ctx, "resume", "Resume", "play"));
     if (has("stop")) items.push(stopBtn(ctx));
     if (has("home")) items.push(simple(ctx, "home", "Home", "home"));
-    if (has("clear_hms")) items.push(simple(ctx, "clear_hms", "Clear HMS", "alert"));
+    if (has("clear_hms")) items.push(simple(ctx, "clear_hms", "Dismiss alert", "alert"));
     return items.length ? html`<div class="tdmm-actions">${items}</div>` : nothing;
   },
   styles: css`

@@ -241,7 +241,7 @@
         "name": "Home"
       },
       "clear_hms": {
-        "name": "Clear HMS"
+        "name": "Dismiss alert"
       }
     }
   },

@@ -49,7 +49,7 @@ describe("control blocks", () => {
   it("home and clear_hms press", () => {
     const { div, hass } = mount("actions");
     btn(div, "Home")!.click();
-    btn(div, "Clear HMS")!.click();
+    btn(div, "Dismiss alert")!.click();
     expect(hass.callService).toHaveBeenCalledWith("button", "press", { entity_id: BTN("home") });
     expect(hass.callService).toHaveBeenCalledWith("button", "press", { entity_id: BTN("clear_hms") });
   });
