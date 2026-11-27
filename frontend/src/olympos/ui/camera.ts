@@ -6,7 +6,6 @@ import { cameraState } from "../logic/camera-age.ts";
 import { cameraMode, type CameraMode } from "../logic/gating.ts";
 
 export const START_CAP_MS = 10_000;
-const AGE_TICK_MS = 5_000;
 
 export interface CameraChip { label: string; tone: "live" | "warn" | "stall" | "muted"; }
 
@@ -24,7 +23,7 @@ export function cameraChip(mode: CameraMode, starting: boolean, state: unknown):
 export class TdmmOlymposCamera extends LitElement {
   static properties = {
     hass: { attribute: false }, entity: { attribute: false }, mode: {}, lightOff: { type: Boolean }, ready: { state: true },
-    inView: { state: true }, docVisible: { state: true }, enlarged: { state: true }, _tick: { state: true },
+    inView: { state: true }, docVisible: { state: true }, enlarged: { state: true },
   };
   hass?: HomeAssistant;
   entity?: HassEntity;
@@ -34,10 +33,8 @@ export class TdmmOlymposCamera extends LitElement {
   private inView = typeof IntersectionObserver === "undefined";
   private docVisible = true;
   private enlarged = false;
-  private _tick = 0;
   private io?: IntersectionObserver;
   private capTimer?: ReturnType<typeof setTimeout>;
-  private ageTimer?: ReturnType<typeof setInterval>;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -47,7 +44,6 @@ export class TdmmOlymposCamera extends LitElement {
       this.io = new IntersectionObserver((es) => { this.inView = es.some((e) => e.isIntersecting); });
       this.io.observe(this);
     }
-    this.ageTimer = setInterval(() => { this._tick++; }, AGE_TICK_MS);
   }
   disconnectedCallback(): void {
     super.disconnectedCallback();
@@ -55,7 +51,6 @@ export class TdmmOlymposCamera extends LitElement {
     window.removeEventListener("keydown", this.onKey);
     this.io?.disconnect();
     clearTimeout(this.capTimer);
-    clearInterval(this.ageTimer);
   }
   private onVis = (): void => { this.docVisible = document.visibilityState !== "hidden"; };
   private onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") this.close(); };
@@ -99,7 +94,6 @@ export class TdmmOlymposCamera extends LitElement {
   }
 
   protected render(): TemplateResult {
-    void this._tick;
     if (this.enlarged) {
       return html`<div class="ph-fill"></div>
         <div class="ov" role="dialog" aria-modal="true" aria-label="Camera" @click=${this.close}>
