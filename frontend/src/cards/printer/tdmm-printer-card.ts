@@ -26,7 +26,7 @@ export class TdmmPrinterCard extends TdmmBaseCard {
           background: var(--_tdmm-chip-bg); color: var(--_tdmm-text-secondary);
           font-family: inherit; font-size: inherit;
         }
-        .tdmm-tab.active { background: var(--_tdmm-accent); color: var(--_tdmm-bg); }
+        .tdmm-tab.active { background: var(--_tdmm-accent); color: var(--_tdmm-on-accent); }
       `,
     ];
   }

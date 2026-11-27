@@ -19,6 +19,7 @@ Every token defaults to a Home Assistant variable, so cards follow light and dar
 | `--tdmm-text` | `var(--primary-text-color)` | Primary text color. |
 | `--tdmm-text-secondary` | `var(--secondary-text-color)` | Secondary text and label color. |
 | `--tdmm-bg` | `var(--ha-card-background, var(--card-background-color))` | Card background. |
+| `--tdmm-on-accent` | `var(--tdmm-on-accent-auto, var(--text-primary-color, var(--_tdmm-bg)))` | Text and icons on accent fills. Defaults to black or white, whichever contrasts more with the accent. |
 | `--tdmm-chip-bg` | `var(--secondary-background-color)` | Background of chips, tiles and bars. |
 | `--tdmm-radius` | `var(--ha-card-border-radius, 12px)` | Corner radius. |
 | `--tdmm-gap` | `8px` | Spacing between blocks and items. |
@@ -37,6 +38,7 @@ my-theme:
       --tdmm-text: "#ff6600"
       --tdmm-text-secondary: "#ff6600"
       --tdmm-bg: "#ff6600"
+      --tdmm-on-accent: "#ff6600"
       --tdmm-chip-bg: "#ff6600"
     dark:
       --tdmm-accent: "#ff6600"
@@ -44,6 +46,7 @@ my-theme:
       --tdmm-text: "#ff6600"
       --tdmm-text-secondary: "#ff6600"
       --tdmm-bg: "#ff6600"
+      --tdmm-on-accent: "#ff6600"
       --tdmm-chip-bg: "#ff6600"
 ```
 
@@ -65,6 +68,7 @@ Supported keys (numbers are pixels):
 - `text`
 - `text_secondary`
 - `bg`
+- `on_accent`
 - `chip_bg`
 - `radius`
 - `font_family`

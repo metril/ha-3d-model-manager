@@ -1,5 +1,5 @@
 export type TokenName =
-  | "accent" | "progress" | "text" | "text-secondary" | "bg" | "chip-bg"
+  | "accent" | "progress" | "text" | "text-secondary" | "bg" | "on-accent" | "chip-bg"
   | "radius" | "gap" | "font-family" | "font-size" | "icon-size";
 
 export interface TokenDef {
@@ -15,6 +15,7 @@ export const TOKENS: readonly TokenDef[] = [
   { name: "text", fallback: "var(--primary-text-color)", description: "Primary text color.", kind: "color" },
   { name: "text-secondary", fallback: "var(--secondary-text-color)", description: "Secondary text and label color.", kind: "color" },
   { name: "bg", fallback: "var(--ha-card-background, var(--card-background-color))", description: "Card background.", kind: "color" },
+  { name: "on-accent", fallback: "var(--tdmm-on-accent-auto, var(--text-primary-color, var(--_tdmm-bg)))", description: "Text and icons on accent fills. Defaults to black or white, whichever contrasts more with the accent.", kind: "color" },
   { name: "chip-bg", fallback: "var(--secondary-background-color)", description: "Background of chips, tiles and bars.", kind: "color" },
   { name: "radius", fallback: "var(--ha-card-border-radius, 12px)", description: "Corner radius.", kind: "length" },
   { name: "gap", fallback: "8px", description: "Spacing between blocks and items.", kind: "length" },
@@ -25,6 +26,33 @@ export const TOKENS: readonly TokenDef[] = [
 
 export function tokenCss(): string {
   return `:host{${TOKENS.map((t) => `--_tdmm-${t.name}: var(--tdmm-${t.name}, ${t.fallback});`).join("")}}`;
+}
+
+function luminance([r, g, b]: [number, number, number]): number {
+  const f = (c: number) => { const v = c / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+
+export function parseColor(input: string): [number, number, number] | undefined {
+  const s = input.trim().toLowerCase();
+  let m = /^#([0-9a-f]{3,8})$/.exec(s);
+  if (m) {
+    let h = m[1]!;
+    if (h.length === 3 || h.length === 4) h = [...h].map((c) => c + c).join("");
+    if (h.length !== 6 && h.length !== 8) return undefined;
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
+  }
+  m = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/.exec(s);
+  if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+  return undefined;
+}
+
+/** Pick #000000 or #ffffff, whichever has the higher WCAG contrast against `color`. */
+export function pickOnAccent(color: string): string | undefined {
+  const rgb = parseColor(color);
+  if (!rgb) return undefined;
+  const l = luminance(rgb);
+  return (l + 0.05) / 0.05 >= 1.05 / (l + 0.05) ? "#000000" : "#ffffff";
 }
 
 export type Density = "compact" | "normal" | "comfortable";
@@ -57,6 +85,7 @@ export interface ThemeConfig {
   text?: string;
   text_secondary?: string;
   bg?: string;
+  on_accent?: string;
   chip_bg?: string;
   radius?: number;
   font_family?: string;
@@ -76,6 +105,7 @@ export function themeStyleVars(theme: ThemeConfig | undefined): Record<string, s
   str("text", theme.text);
   str("text-secondary", theme.text_secondary);
   str("bg", theme.bg);
+  str("on-accent", theme.on_accent);
   str("chip-bg", theme.chip_bg);
   px("radius", theme.radius);
   str("font-family", theme.font_family);
@@ -89,7 +119,7 @@ export function renderThemingMarkdown(): string {
   const rows = TOKENS.map((t) => `| \`--tdmm-${t.name}\` | \`${t.fallback}\` | ${t.description} |`).join("\n");
   const yamlLines = TOKENS.filter((t) => t.kind === "color").map((t) => `      --tdmm-${t.name}: "#ff6600"`);
   const keys = [
-    "accent", "progress", "text", "text_secondary", "bg", "chip_bg", "radius", "font_family",
+    "accent", "progress", "text", "text_secondary", "bg", "on_accent", "chip_bg", "radius", "font_family",
     "font_size", "icon_size", "density", "icon_set",
   ].map((k) => `- \`${k}\``).join("\n");
   const dens = (Object.keys(DENSITY_GAP) as Density[]).map((d) => `| \`${d}\` | \`${DENSITY_GAP[d]}\` |`).join("\n");
