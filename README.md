@@ -118,7 +118,7 @@ How the controls behave:
 
 These gates exist only in the card. The button entities still act immediately when automations or other dashboards press them.
 
-The camera streams only while it's on screen and the page is visible; tap it to enlarge it. The frame-age chip is ready for a `frame_timestamp` attribute on the camera entity, which 3D Model Manager doesn't send yet. Until it does, the chip shows "Live". Charts load history only when that screen is opened.
+The camera streams only while it's on screen and the page is visible; tap it to enlarge it. The camera chip reflects the `camera_state` attribute on the camera entity (Live, Stalled, or Camera starting…), reported by 3D Model Manager 0.26.0 or later. Older versions fall back to showing "Live" once the stream loads. While paused, the pause duration uses the `paused_at` attribute of the print state sensor when present, otherwise the time the state last changed. Charts load history only when that screen is opened.
 
 ## Releasing
 

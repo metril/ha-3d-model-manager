@@ -2,21 +2,20 @@ import { LitElement, css, html, nothing, type PropertyValues, type TemplateResul
 import { defineOnce } from "../../register.ts";
 import type { HassEntity, HomeAssistant } from "../../ha-types.ts";
 import type { OlymposCtx } from "../contracts.ts";
-import { frameAge } from "../logic/camera-age.ts";
+import { cameraState } from "../logic/camera-age.ts";
 import { cameraMode, type CameraMode } from "../logic/gating.ts";
 
 export const START_CAP_MS = 10_000;
-const AGE_TICK_MS = 5_000;
 
 export interface CameraChip { label: string; tone: "live" | "warn" | "stall" | "muted"; }
 
 /** Pure chip decision for the camera overlay. */
-export function cameraChip(mode: CameraMode, starting: boolean, ts: unknown, now: number): CameraChip {
+export function cameraChip(mode: CameraMode, starting: boolean, state: unknown): CameraChip {
   if (mode === "last") return { label: "Last frame", tone: "muted" };
-  if (starting) return { label: "Camera starting…", tone: "muted" };
-  const a = frameAge(ts, now);
-  if (a.kind === "lag") return { label: `${a.sec} s old`, tone: "warn" };
-  if (a.kind === "stall") return { label: `Stalled · ${a.min} min`, tone: "stall" };
+  const s = cameraState(state);
+  if (s === "stalled") return { label: "Stalled", tone: "stall" };
+  if (s === "warming") return { label: "Camera starting…", tone: "muted" };
+  if (s === "unknown" && starting) return { label: "Camera starting…", tone: "muted" };
   return { label: "Live", tone: "live" };
 }
 
@@ -24,7 +23,7 @@ export function cameraChip(mode: CameraMode, starting: boolean, ts: unknown, now
 export class TdmmOlymposCamera extends LitElement {
   static properties = {
     hass: { attribute: false }, entity: { attribute: false }, mode: {}, lightOff: { type: Boolean }, ready: { state: true },
-    inView: { state: true }, docVisible: { state: true }, enlarged: { state: true }, _tick: { state: true },
+    inView: { state: true }, docVisible: { state: true }, enlarged: { state: true },
   };
   hass?: HomeAssistant;
   entity?: HassEntity;
@@ -34,10 +33,8 @@ export class TdmmOlymposCamera extends LitElement {
   private inView = typeof IntersectionObserver === "undefined";
   private docVisible = true;
   private enlarged = false;
-  private _tick = 0;
   private io?: IntersectionObserver;
   private capTimer?: ReturnType<typeof setTimeout>;
-  private ageTimer?: ReturnType<typeof setInterval>;
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -47,7 +44,6 @@ export class TdmmOlymposCamera extends LitElement {
       this.io = new IntersectionObserver((es) => { this.inView = es.some((e) => e.isIntersecting); });
       this.io.observe(this);
     }
-    this.ageTimer = setInterval(() => { this._tick++; }, AGE_TICK_MS);
   }
   disconnectedCallback(): void {
     super.disconnectedCallback();
@@ -55,7 +51,6 @@ export class TdmmOlymposCamera extends LitElement {
     window.removeEventListener("keydown", this.onKey);
     this.io?.disconnect();
     clearTimeout(this.capTimer);
-    clearInterval(this.ageTimer);
   }
   private onVis = (): void => { this.docVisible = document.visibilityState !== "hidden"; };
   private onKey = (e: KeyboardEvent): void => { if (e.key === "Escape") this.close(); };
@@ -89,7 +84,7 @@ export class TdmmOlymposCamera extends LitElement {
 
   private panel(big: boolean): TemplateResult {
     const starting = this.mode === "live" && this.streaming && !this.ready;
-    const chip = cameraChip(this.mode, starting, this.entity?.attributes.frame_timestamp, Date.now());
+    const chip = cameraChip(this.mode, starting, this.entity?.attributes.camera_state);
     const media = this.media();
     return html`<div class="frame ${big ? "big" : ""}">
       <div class="media">${media === nothing ? html`<div class="ph"><ha-icon icon="mdi:camera-outline"></ha-icon></div>` : media}</div>
@@ -99,7 +94,6 @@ export class TdmmOlymposCamera extends LitElement {
   }
 
   protected render(): TemplateResult {
-    void this._tick;
     if (this.enlarged) {
       return html`<div class="ph-fill"></div>
         <div class="ov" role="dialog" aria-modal="true" aria-label="Camera" @click=${this.close}>

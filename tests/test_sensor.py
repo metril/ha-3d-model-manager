@@ -168,3 +168,14 @@ async def test_state_written_only_on_change(hass: HomeAssistant, fake_tdmm: Fake
     await _push(hass, fake_tdmm, {"mc_percent": 42})
     await _push(hass, fake_tdmm, {"mc_percent": 42})
     assert events == []
+
+
+async def test_print_state_paused_at_attribute(hass: HomeAssistant, fake_tdmm: FakeTdmm) -> None:
+    fake_tdmm.printers = [{"id": 1, "name": "A1", "serial": "SN1"}]
+    fake_tdmm.statuses[1] = _raw()
+    await _setup(hass, fake_tdmm)
+    await _state(hass, "sensor.a1_print_state", "running")
+    assert hass.states.get("sensor.a1_print_state").attributes["paused_at"] is None
+    await _push(hass, fake_tdmm, {"gcode_state": "PAUSE", "paused_at": "2026-10-30T10:00:00Z"})
+    await _state(hass, "sensor.a1_print_state", "pause")
+    assert hass.states.get("sensor.a1_print_state").attributes["paused_at"] == "2026-10-30T10:00:00Z"

@@ -258,6 +258,13 @@ class TdmmSensor(TdmmEntity, SensorEntity):
         data = self.coordinator.data
         return None if data is None else self.entity_description.value_fn(data)
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None] | None:
+        data = self.coordinator.data
+        if data is None or self.entity_description.key != "print_state":
+            return None
+        return {"paused_at": data.paused_at}
+
 
 class TdmmEndTimeSensor(TdmmSensor):
     """Estimated end time, recomputed only when the remaining minutes change."""
