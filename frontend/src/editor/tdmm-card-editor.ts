@@ -1,6 +1,6 @@
 import { LitElement, css, html, nothing, type TemplateResult } from "lit";
 import {
-  CARD_DEFAULTS, normalizeConfig, serializeConfig,
+  CARD_DEFAULTS, isOlympos, normalizeConfig, serializeConfig,
   type BlockEntry, type NormalizedConfig, type TabId, type TdmmCardConfig,
 } from "../config.ts";
 import type { HomeAssistant } from "../ha-types.ts";
@@ -10,13 +10,14 @@ import { editorSchema } from "./schema.ts";
 import "./tdmm-block-list.ts";
 
 const TABS: TabId[] = ["status", "control", "filament"];
-const COLOR_KEYS = ["accent", "progress", "text", "text_secondary", "bg", "chip_bg"] as const;
+const COLOR_KEYS = ["accent", "progress", "text", "text_secondary", "bg", "chip_bg", "tile_accent"] as const;
 const LABELS: Record<string, string> = {
   device_id: "Printer", default_tab: "Default tab", hide_tabs: "Hidden tabs", camera_view: "Camera view",
   theme: "Appearance", accent: "Accent color", progress: "Progress color", text: "Text color",
   text_secondary: "Secondary text color", bg: "Background color", chip_bg: "Chip background",
   radius: "Corner radius", font_size: "Font size", icon_size: "Icon size", font_family: "Font family",
-  density: "Density", icon_set: "Icon set",
+  density: "Density", icon_set: "Icon set", variant: "Variant", name: "Name", tap_action: "Tap action",
+  palette: "Palette", tile_accent: "Tile accent color",
 };
 
 function validColor(v: unknown): boolean {
@@ -99,6 +100,12 @@ export class TdmmCardEditor extends LitElement {
       if (TABS.includes(v.default_tab as TabId)) next.default_tab = v.default_tab as TabId;
       next.hide_tabs = Array.isArray(v.hide_tabs) ? v.hide_tabs.filter((t): t is TabId => TABS.includes(t as TabId)) : [];
     }
+    if (c.kind === "olympos-tile") {
+      next.variant = v.variant === "wide" ? "wide" : "compact";
+      next.name = typeof v.name === "string" && v.name !== "" ? v.name : undefined;
+      next.tap_action = typeof v.tap_action === "object" && v.tap_action !== null && typeof (v.tap_action as { action?: unknown }).action === "string"
+        ? (v.tap_action as NormalizedConfig["tap_action"]) : { ...CARD_DEFAULTS.tap_action };
+    }
     if (c.kind === "camera") next.camera_view = v.camera_view === "live" ? "live" : "auto";
     this._cfg = next;
     this.fire();
@@ -123,7 +130,10 @@ export class TdmmCardEditor extends LitElement {
       default_tab: c.default_tab,
       hide_tabs: c.hide_tabs,
       camera_view: c.camera_view,
-      theme: { density: CARD_DEFAULTS.theme_keys.density, icon_set: CARD_DEFAULTS.theme_keys.icon_set, ...this._formTheme },
+      variant: c.variant,
+      name: c.name ?? "",
+      tap_action: c.tap_action,
+      theme: { density: CARD_DEFAULTS.theme_keys.density, icon_set: CARD_DEFAULTS.theme_keys.icon_set, ...(isOlympos(c.kind) ? CARD_DEFAULTS.olympos_theme : {}), ...this._formTheme },
     };
     const printer = c.kind === "printer";
     return html`
@@ -132,7 +142,7 @@ export class TdmmCardEditor extends LitElement {
         @value-changed=${(e: CustomEvent<{ value: Record<string, unknown> }>) => this.onForm(e)}></ha-form>
       ${printer ? html`<div class="tabs">${TABS.map((t) => html`
         <button class="tab ${t === this._tab ? "active" : ""}" @click=${() => { this._tab = t; }}>${t[0]!.toUpperCase() + t.slice(1)}</button>`)}</div>` : nothing}
-      <tdmm-block-list .hass=${this.hass} .blocks=${printer ? c.tabs[this._tab] : c.blocks}
-        @blocks-changed=${(e: CustomEvent<{ blocks: BlockEntry[] }>) => this.onBlocks(e)}></tdmm-block-list>`;
+      ${isOlympos(c.kind) ? nothing : html`<tdmm-block-list .hass=${this.hass} .blocks=${printer ? c.tabs[this._tab] : c.blocks}
+        @blocks-changed=${(e: CustomEvent<{ blocks: BlockEntry[] }>) => this.onBlocks(e)}></tdmm-block-list>`}`;
   }
 }

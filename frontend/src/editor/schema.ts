@@ -1,4 +1,4 @@
-import type { CardKind } from "../config.ts";
+import { isOlympos, type CardKind } from "../config.ts";
 
 export type HaFormSchema = Record<string, unknown>;
 
@@ -23,6 +23,14 @@ export function editorSchema(kind: CardKind): HaFormSchema[] {
     );
   }
   if (kind === "camera") schema.push({ name: "camera_view", selector: select(["auto", "live"]) });
+  if (kind === "olympos-tile") {
+    schema.push(
+      { name: "variant", selector: select(["compact", "wide"]) },
+      { name: "name", selector: text },
+      { name: "tap_action", selector: { ui_action: {} } },
+    );
+  }
+  const olympos = isOlympos(kind);
   schema.push({
     type: "expandable",
     name: "theme",
@@ -33,6 +41,8 @@ export function editorSchema(kind: CardKind): HaFormSchema[] {
       { name: "font_family", selector: text },
       { name: "density", selector: select(["compact", "normal", "comfortable"]) },
       { name: "icon_set", selector: select(["default", "outline"]) },
+      ...(olympos ? [{ name: "palette", selector: select(["home", "vivid", "mocha"]) }] : []),
+      ...(kind === "olympos-tile" ? [{ name: "tile_accent", selector: text }] : []),
     ],
   });
   return schema;
